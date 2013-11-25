@@ -472,6 +472,16 @@
               <FileType>1</FileType>
               <FilePath>.\src\project_robot.c</FilePath>
             </File>
+            <File>
+              <FileName>project_keypad.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\project_keypad.c</FilePath>
+            </File>
+            <File>
+              <FileName>project_keypad.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\src\project_keypad.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
