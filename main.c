@@ -54,71 +54,14 @@ int main (void) {
 	
 	CC2500_config_transmitter();
 	
-	dummyAddr = 0x3F;
-// 	CC2500_StrobeSend(SRES_T,&state,&buffer_space);
-// 	osDelay(1000);
-	
-//	CC2500_StrobeSend(SFTX_T,&state,&buffer_space);
-//	osDelay(1000);
-//	
-//	CC2500_StrobeSend(SIDLE_T,&state,&buffer_space);
-//	osDelay(1000);
-//	
-//	CC2500_StrobeSend(SIDLE_T,&state,&buffer_space);
-//	osDelay(1000);
-//	
-//	CC2500_StrobeSend(SCAL_T,&state,&buffer_space);
-//	osDelay(1000);
-/////////////////////////
-	
-	uint8_t data[4] = {0,0,0,0};
-//	
-//	Wireless_TX(data);
+	goToTX();
 
-	CC2500_StrobeSend(SIDLE_R,&state,&buffer_space);
-	osDelay(1000);
-	
-	CC2500_StrobeSend(SFRX_R,&state,&buffer_space);
-	osDelay(1000);
-	
-	
-	CC2500_StrobeSend(SIDLE_R,&state,&buffer_space);
-	osDelay(1000);
-	
-	CC2500_StrobeSend(SCAL_R,&state,&buffer_space);
-	osDelay(1000);
-
-	CC2500_StrobeSend(SRX_R,&state,&buffer_space);
-	osDelay(1000);
-
-	Wireless_RX(data);
 	osDelay(osWaitForever);
 }
 
 void thread (void const *argument) {
-	parkRobot(&robot);
-	osDelay(1000);
+	uint8_t data[4];
 	while(1) {
-		moveRobot(&robot, 0, 0, 11);
-		turnMagnetOff(&magnet);
-		osDelay(2000);
-		moveRobot(&robot, 1, 0, 11);
-		turnMagnetOff(&magnet);
-		osDelay(2000);
-		moveRobot(&robot, 2, 0, 11);
-		turnMagnetOff(&magnet);
-		osDelay(2000);
-		moveRobot(&robot, 3, 0, 11);
-		turnMagnetOff(&magnet);
-		osDelay(2000);
-		moveRobot(&robot, 4, 0, 11);
-		turnMagnetOff(&magnet);
-		osDelay(2000);
-		moveRobot(&robot, 5, 0, 11);
-		turnMagnetOff(&magnet);
-		osDelay(2000);
-		moveRobot(&robot, 6, 0, 11);
-		turnMagnetOn(&magnet);
-		osDelay(2000);
+		
 	}
 }

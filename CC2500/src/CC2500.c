@@ -1,4 +1,5 @@
 #include "CC2500.h"
+#include "cmsis_os.h"
 
 /** @defgroup STM32F4_DISCOVERY_CC2500_Private_Defines
   * @{
@@ -21,11 +22,11 @@ __IO uint32_t  CC2500Timeout = CC2500_FLAG_TIMEOUT;
 //Local functions
 static void CC2500_LowLevel_Init(void);
 static uint8_t CC2500_SendByte(uint8_t byte);
-uint8_t tmp_data[12];
-uint8_t tmp_data_RX[3];
-uint8_t FSM_state;
-uint8_t FSM_buffer_space;
-int i;
+static uint8_t tmp_data[12];
+static uint8_t tmp_data_RX[3];
+static uint8_t FSM_state;
+static uint8_t FSM_buffer_space;
+static int i;
 
 /**
   * @brief  Set CC2500 Initialization.
@@ -509,4 +510,38 @@ void Wireless_RX(uint8_t *data){
 		data[i] = ((tmp_data_RX[0]& tmp_data_RX[1])|(tmp_data_RX[0]& tmp_data_RX[2])|(tmp_data_RX[1]&tmp_data_RX[2]));		
 	}
 	
+}
+
+void goToRX(void) {
+	CC2500_StrobeSend(SIDLE_R,&FSM_state,&FSM_buffer_space);
+	osDelay(CONFIGURE_SLEEP_TIME);
+	
+	CC2500_StrobeSend(SFRX_R,&FSM_state,&FSM_buffer_space);
+	osDelay(CONFIGURE_SLEEP_TIME);
+	
+	CC2500_StrobeSend(SIDLE_R,&FSM_state,&FSM_buffer_space);
+	osDelay(CONFIGURE_SLEEP_TIME);
+	
+	CC2500_StrobeSend(SCAL_R,&FSM_state,&FSM_buffer_space);
+	osDelay(CONFIGURE_SLEEP_TIME);
+
+	CC2500_StrobeSend(SRX_R,&FSM_state,&FSM_buffer_space);
+	osDelay(CONFIGURE_SLEEP_TIME);
+}
+
+void goToTX(void) {
+	CC2500_StrobeSend(SRES_T,&FSM_state,&FSM_buffer_space);
+ 	osDelay(CONFIGURE_SLEEP_TIME);
+	
+	CC2500_StrobeSend(SFTX_T,&FSM_state,&FSM_buffer_space);
+	osDelay(CONFIGURE_SLEEP_TIME);
+	
+	CC2500_StrobeSend(SIDLE_T,&FSM_state,&FSM_buffer_space);
+	osDelay(CONFIGURE_SLEEP_TIME);
+	
+	CC2500_StrobeSend(SIDLE_T,&FSM_state,&FSM_buffer_space);
+	osDelay(CONFIGURE_SLEEP_TIME);
+	
+	CC2500_StrobeSend(SCAL_T,&FSM_state,&FSM_buffer_space);
+	osDelay(CONFIGURE_SLEEP_TIME);
 }

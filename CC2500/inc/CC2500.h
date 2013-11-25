@@ -424,6 +424,8 @@ Bit 		Field Name 			Description
 #define SWORRST_R				0xBC
 #define SNOP_R					0xBD
 
+#define CONFIGURE_SLEEP_TIME 1000
+
 
 
 
@@ -450,6 +452,8 @@ void CC2500_config_transmitter();
 void CC2500_StrobeSend(uint8_t cmd, uint8_t* state, uint8_t* buffer_space);
 void Wireless_TX(uint8_t * data);
 void Wireless_RX(uint8_t *data);
+void goToRX(void);
+void goToTX(void);
 	
 	/* USER Callbacks: This is function for which prototype only is declared in
    MEMS accelerometre driver and that should be implemented into user applicaiton. */  
