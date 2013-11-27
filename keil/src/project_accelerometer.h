@@ -11,8 +11,12 @@
 
 
 #include "stm32f4xx.h"
+#include "cmsis_os.h"
+
 #include "project_filter.h"
 #include "project_init.h"
+
+#define ACCELEROMETER_SAMPLE_FREQUENCY 25
 
 #ifndef PI																												//Pi safety
 #define PI 3.14159																								//It's Pi...
@@ -71,6 +75,9 @@ struct Orientation {
 	struct Moving_Average moving_average_roll;											//average roll angle struct
 	struct Moving_Average moving_average_pitch;											//average pitch angle struct
 	struct Moving_Average moving_average_yaw;												//average yaw angle struct
+	
+	osThreadId threadID;
+	osMutexId mutexID;
 };
 
 /**
@@ -86,8 +93,8 @@ struct Orientation {
 
 void display_orientation(struct Orientation *orientation);				//
 void update_orientation(struct Orientation *orientation);					//
-void init_orientation(struct Orientation *orientation);						//
-void init_accelerometer(void);																		//
+void init_orientation(struct Orientation *orientation, osThreadId **tid_thread_orientation);						//
+void orientationThread (void const *argument);
 
 /**
   * @}
