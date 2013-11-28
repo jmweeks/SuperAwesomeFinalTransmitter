@@ -423,6 +423,10 @@ Bit 		Field Name 			Description
 #define SWORRST_R				0xBC
 #define SNOP_R					0xBD
 
+#define FIFO_REG				0x3F
+
+#define STROBE_DELAY		100
+
 
 
 
@@ -448,7 +452,9 @@ void CC2500_Read(uint8_t* pBuffer, uint8_t ReadAddr, uint16_t NumByteToRead);
 void CC2500_config_transmitter();
 void CC2500_StrobeSend(uint8_t cmd, uint8_t* state, uint8_t* buffer_space);
 
+void goToTX(uint8_t *state, uint8_t *buffer_space);
 void goToRX(uint8_t *state, uint8_t *buffer_space);
+void wireless_TX(uint8_t data[], uint32_t length, uint8_t *state, uint8_t *buffer_space);
 void wireless_RX(uint8_t data[], uint32_t length, uint8_t *state, uint8_t *buffer_space);
 	
 	/* USER Callbacks: This is function for which prototype only is declared in

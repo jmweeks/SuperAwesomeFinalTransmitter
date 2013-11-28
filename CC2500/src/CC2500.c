@@ -462,23 +462,46 @@ uint32_t CC2500_TIMEOUT_UserCallback(void)
   }
 }
 
+void goToTX(uint8_t *state, uint8_t *buffer_space) {
+	CC2500_StrobeSend(SIDLE_T,state,buffer_space);
+ 	osDelay(STROBE_DELAY);
+	
+	CC2500_StrobeSend(SCAL_T,state,buffer_space);
+	osDelay(STROBE_DELAY);
+	
+ 	CC2500_StrobeSend(STX_T,state,buffer_space);
+ 	osDelay(STROBE_DELAY);
+
+ 	CC2500_StrobeSend(SNOP_T,state,buffer_space);
+	osDelay(STROBE_DELAY);
+}
+
 void goToRX(uint8_t *state, uint8_t *buffer_space) {
 	CC2500_StrobeSend(SIDLE_R,state,buffer_space);
-	osDelay(1000);
+	osDelay(STROBE_DELAY);
 	
 	CC2500_StrobeSend(SFRX_R,state,buffer_space);
-	osDelay(1000);
-	
+	osDelay(STROBE_DELAY);
 	
 	CC2500_StrobeSend(SIDLE_R,state,buffer_space);
-	osDelay(1000);
+	osDelay(STROBE_DELAY);
 	
 	CC2500_StrobeSend(SCAL_R,state,buffer_space);
-	osDelay(1000);
+	osDelay(STROBE_DELAY);
 
 	CC2500_StrobeSend(SRX_R,state,buffer_space);
-	osDelay(1000);
+	osDelay(STROBE_DELAY);
+	
 	CC2500_StrobeSend(SNOP_R,state,buffer_space);
+	osDelay(STROBE_DELAY);
+}
+
+void wireless_TX(uint8_t data[], uint32_t length, uint8_t *state, uint8_t *buffer_space) {
+	CC2500_Write(data, FIFO_REG, length);
+	osDelay(STROBE_DELAY);
+	
+	CC2500_StrobeSend(SNOP_T,state,buffer_space);	
+	osDelay(STROBE_DELAY);
 }
 
 void wireless_RX(uint8_t data[], uint32_t length, uint8_t *state, uint8_t *buffer_space) {

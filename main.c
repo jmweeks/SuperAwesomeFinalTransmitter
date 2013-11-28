@@ -46,9 +46,7 @@ int main (void) {
 	init_pushbutton();
 	CC2500_config_transmitter();
 	
-	uint8_t data[4];
-	
-	goToRX(&state, &buffer_space);
+	goToTX(&state, &buffer_space);
 	
 	tid_thread = osThreadCreate(osThread(thread), NULL);
 
@@ -56,11 +54,25 @@ int main (void) {
 }
 
 void thread (void const *argument) {
-	uint8_t data[4];
-	uint8_t roll;
+	uint8_t data[4] = {10, 9, 8, 1};
+	float roll, pitch;
 	while(1) {
-		wireless_RX(data, 4, &state, &buffer_space);
-		//Wireless_RX(data);
+		osMutexWait(orientation.mutexID, osWaitForever);
+		roll = orientation.moving_average_roll.average;
+		pitch = orientation.moving_average_pitch.average;
+		osMutexRelease(orientation.mutexID);
+		
+		data[0]=(uint8_t)(6*(roll+90)/180) | 0xF0;
+		data[1]=1;
+		data[2]=13*(pitch+90)/180;
+		data[3]=1;
+		wireless_TX(data, 4, &state, &buffer_space);
+		//osDelay(2000);
+		//data[0]=0;
+		//data[1]=0;
+		//data[2]=0;
+		//data[3]=0;
+		//wireless_TX(data, 4, &state, &buffer_space);
 //		Wireless_TX(data);
 //		if (pushbutton_pressed) {
 //			if (mode) {
@@ -88,7 +100,7 @@ void thread (void const *argument) {
 //			osMutexRelease(orientation.mutexID);
 //			writeToLcd(&lcd, (char *)&roll, 1);
 //		}
-		osDelay(1000);
+		osDelay(200);
 	}
 }
 
