@@ -22,11 +22,7 @@ __IO uint32_t  CC2500Timeout = CC2500_FLAG_TIMEOUT;
 //Local functions
 static void CC2500_LowLevel_Init(void);
 static uint8_t CC2500_SendByte(uint8_t byte);
-static uint8_t tmp_data[12];
-static uint8_t tmp_data_RX[3];
-static uint8_t FSM_state;
-static uint8_t FSM_buffer_space;
-static int i;
+
 
 /**
   * @brief  Set CC2500 Initialization.
@@ -466,82 +462,36 @@ uint32_t CC2500_TIMEOUT_UserCallback(void)
   }
 }
 
-void Wireless_TX(uint8_t * data){
+void goToRX(uint8_t *state, uint8_t *buffer_space) {
+	CC2500_StrobeSend(SIDLE_R,state,buffer_space);
+	osDelay(1000);
 	
-// 	//go to idle state
-// 	CC2500_StrobeSend(SIDLE_T,&FSM_state,&FSM_buffer_space);
-// 	osDelay(1000);
-// 	CC2500_StrobeSend(SNOP_T,&FSM_state,&FSM_buffer_space);
+	CC2500_StrobeSend(SFRX_R,state,buffer_space);
+	osDelay(1000);
 	
-	//Copy data for TMR
-	for(i = 0; i < 4; i++){
-		tmp_data[3*i] = data[i];
-		tmp_data[3*i + 1] = data[i];
-		tmp_data[3*i + 2] = data[i];
-	}
-	 
 	
-// 	//Flush TX buffer
-// 	CC2500_StrobeSend(SFTX_T,&FSM_state,&FSM_buffer_space);
-// 	osDelay(1000);
-// 	CC2500_StrobeSend(SNOP_T,&FSM_state,&FSM_buffer_space);
+	CC2500_StrobeSend(SIDLE_R,state,buffer_space);
+	osDelay(1000);
 	
-	CC2500_Write(tmp_data, 0x3F, 12);
-	
-// 	osDelay(1000);
-// 	CC2500_StrobeSend(STX_T,&FSM_state,&FSM_buffer_space);
-// 	osDelay(1000);
-// 	CC2500_StrobeSend(SNOP_T,&FSM_state,&FSM_buffer_space);
-// 	osDelay(1000);
+	CC2500_StrobeSend(SCAL_R,state,buffer_space);
+	osDelay(1000);
+
+	CC2500_StrobeSend(SRX_R,state,buffer_space);
+	osDelay(1000);
+	CC2500_StrobeSend(SNOP_R,state,buffer_space);
 }
 
-void Wireless_RX(uint8_t *data){
-	
-	CC2500_StrobeSend(SNOP_R,&FSM_state,&FSM_buffer_space);
-	
-	//wait until theres a packet to be read
-	while (FSM_buffer_space < 12){
-		CC2500_StrobeSend(SNOP_R,&FSM_state,&FSM_buffer_space);	
+void wireless_RX(uint8_t data[], uint32_t length, uint8_t *state, uint8_t *buffer_space) {
+	if (length > 12) {
+		length = 12;
 	}
-	
-	//read packet one byte at a time and do TMR
-	for(i = 0; i < 4; i++){
-		CC2500_Read(tmp_data_RX, 0x3F, 3);
-		data[i] = ((tmp_data_RX[0]& tmp_data_RX[1])|(tmp_data_RX[0]& tmp_data_RX[2])|(tmp_data_RX[1]&tmp_data_RX[2]));		
+	CC2500_StrobeSend(SNOP_R,state,buffer_space);	
+	osDelay(1000);
+	while (*buffer_space < length){
+		CC2500_StrobeSend(SNOP_R,state,buffer_space);	
 	}
-	
-}
-
-void goToRX(void) {
-	CC2500_StrobeSend(SIDLE_R,&FSM_state,&FSM_buffer_space);
-	osDelay(CONFIGURE_SLEEP_TIME);
-	
-	CC2500_StrobeSend(SFRX_R,&FSM_state,&FSM_buffer_space);
-	osDelay(CONFIGURE_SLEEP_TIME);
-	
-	CC2500_StrobeSend(SIDLE_R,&FSM_state,&FSM_buffer_space);
-	osDelay(CONFIGURE_SLEEP_TIME);
-	
-	CC2500_StrobeSend(SCAL_R,&FSM_state,&FSM_buffer_space);
-	osDelay(CONFIGURE_SLEEP_TIME);
-
-	CC2500_StrobeSend(SRX_R,&FSM_state,&FSM_buffer_space);
-	osDelay(CONFIGURE_SLEEP_TIME);
-}
-
-void goToTX(void) {
-	CC2500_StrobeSend(SRES_T,&FSM_state,&FSM_buffer_space);
- 	osDelay(CONFIGURE_SLEEP_TIME);
-	
-	CC2500_StrobeSend(SFTX_T,&FSM_state,&FSM_buffer_space);
-	osDelay(CONFIGURE_SLEEP_TIME);
-	
-	CC2500_StrobeSend(SIDLE_T,&FSM_state,&FSM_buffer_space);
-	osDelay(CONFIGURE_SLEEP_TIME);
-	
-	CC2500_StrobeSend(SIDLE_T,&FSM_state,&FSM_buffer_space);
-	osDelay(CONFIGURE_SLEEP_TIME);
-	
-	CC2500_StrobeSend(SCAL_T,&FSM_state,&FSM_buffer_space);
-	osDelay(CONFIGURE_SLEEP_TIME);
+	osDelay(1000);
+	CC2500_Read(data, 0x3F, length);
+	osDelay(1000);
+	CC2500_StrobeSend(SNOP_R,state,buffer_space);	
 }

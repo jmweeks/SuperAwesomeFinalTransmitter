@@ -30,6 +30,10 @@ static osThreadId tid_thread;
 static uint32_t mode = 0;
 static uint32_t pushbutton_pressed = 0;
 
+uint8_t data_testing[64];
+uint8_t state;
+uint8_t buffer_space;
+
 /*!
  @brief Program entry point
  */
@@ -40,12 +44,13 @@ int main (void) {
 	init_lcd(&lcd);
 	init_orientation(&orientation, &tid_thread_orientation);
 	init_pushbutton();
-	
-	tid_thread = osThreadCreate(osThread(thread), NULL);
-	
 	CC2500_config_transmitter();
 	
-	goToTX();
+	uint8_t data[4];
+	
+	goToRX(&state, &buffer_space);
+	
+	tid_thread = osThreadCreate(osThread(thread), NULL);
 
 	osDelay(osWaitForever);
 }
@@ -54,33 +59,36 @@ void thread (void const *argument) {
 	uint8_t data[4];
 	uint8_t roll;
 	while(1) {
-		if (pushbutton_pressed) {
-			if (mode) {
-				mode = 0;
-			} else {
-				mode = 1;
-			}
-			osDelay(PUSHBUTTON_DELAY);																				//delay 10ms (debounce)
-			while (GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0)) {	//reading pushbutton input
-				osDelay(PUSHBUTTON_DELAY);																			//delay 10ms (debounce)
-			}
-			pushbutton_pressed = 0;
-		}
-		if (mode) {
-			osMutexWait(keypad.mutexID, osWaitForever);
-			roll = keypad.key_char;
-			osMutexRelease(keypad.mutexID);
-			if (roll != 0xFF) {
-				roll+=48;
-				writeToLcd(&lcd, (char*)(&roll), 1);
-			}
-		} else {
-			osMutexWait(orientation.mutexID, osWaitForever);
-			roll = orientation.moving_average_pitch.average/9+48;
-			osMutexRelease(orientation.mutexID);
-			writeToLcd(&lcd, (char *)&roll, 1);
-		}
-		osDelay(10);
+		wireless_RX(data, 4, &state, &buffer_space);
+		//Wireless_RX(data);
+//		Wireless_TX(data);
+//		if (pushbutton_pressed) {
+//			if (mode) {
+//				mode = 0;
+//			} else {
+//				mode = 1;
+//			}
+//			osDelay(PUSHBUTTON_DELAY);																				//delay 10ms (debounce)
+//			while (GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0)) {	//reading pushbutton input
+//				osDelay(PUSHBUTTON_DELAY);																			//delay 10ms (debounce)
+//			}
+//			pushbutton_pressed = 0;
+//		}
+//		if (mode) {
+//			osMutexWait(keypad.mutexID, osWaitForever);
+//			roll = keypad.key_char;
+//			osMutexRelease(keypad.mutexID);
+//			if (roll != 0xFF) {
+//				roll+=48;
+//				writeToLcd(&lcd, (char*)(&roll), 1);
+//			}
+//		} else {
+//			osMutexWait(orientation.mutexID, osWaitForever);
+//			roll = orientation.moving_average_pitch.average/9+48;
+//			osMutexRelease(orientation.mutexID);
+//			writeToLcd(&lcd, (char *)&roll, 1);
+//		}
+		osDelay(1000);
 	}
 }
 
