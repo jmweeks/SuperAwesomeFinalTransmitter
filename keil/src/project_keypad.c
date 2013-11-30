@@ -2,29 +2,7 @@
 #include "cmsis_os.h"
 
 #include "project_keypad.h"
-
-static void init_TIM5() {
-  NVIC_InitTypeDef NVIC_InitStructure;																								//NVIC initialization struct
-	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;																			//Timer initialization struct
-	
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE); 					//Enable clock to TIM10
-	
-	TIM_TimeBaseStructure.TIM_ClockDivision = 0x0;								//No clock division
-	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;		//Counts up
-	TIM_TimeBaseStructure.TIM_Period = 0xFFFF;										//Period set for largest dynamic range of standard timer frequencies to be used
-	TIM_TimeBaseStructure.TIM_Prescaler = SystemCoreClock/(2*KEYPAD_SAMPLE_FREQUENCY*TIM_TimeBaseStructure.TIM_Period)-1;									//Set prescaler to determine frequency
-	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0x0;						//Restart RCR count after counting down to this value
-	TIM_TimeBaseInit(TIM5, &TIM_TimeBaseStructure);								//Initialize struct parameters to TIM5
-	
-	TIM_Cmd(TIM5, ENABLE);																				//Enable specified peripheral
-	TIM_ITConfig(TIM5, TIM_IT_Update, ENABLE);										//Enable new interrupt state
-	
-	NVIC_InitStructure.NVIC_IRQChannel = TIM5_IRQn;								//Specify interrupt request channel to be used
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01; 	//Indicates pre-emption priority, 0-15, lower # =higher prriority
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x01; 				//Subpriority value 0-15, lower # =higher prriority
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; 							//Enable interrupt request channel specified earlier
-  NVIC_Init(&NVIC_InitStructure);																//Initialize NVIC for TIM3 with struct params
-}
+#include "project_init.h"
 
 static void init_keypad_row_output() {
 	GPIO_InitTypeDef GPIO_InitStructure;																														//Initialize nested vector interrupt controller structure
@@ -97,11 +75,12 @@ static void get_button_press(struct Keypad *keypad) {
 }
 
 void init_keypad(struct Keypad *keypad, osThreadId **tid_thread_keypad) {
-	keypad->row_output		=0x0;
-	keypad->column_output	=0x0;
-	keypad->key_press			=0x0;
-	keypad->key_char			=0x0;
-	keypad->new_data			=0x0;
+	keypad->row_output					=0x0;
+	keypad->column_output				=0x0;
+	keypad->key_press						=0x0;
+	keypad->key_char						=0x0;
+	keypad->new_data_available	=0x0;
+	keypad->old_key_char				=0x0;
 	
 	init_TIM5();
 	
@@ -114,7 +93,7 @@ void init_keypad(struct Keypad *keypad, osThreadId **tid_thread_keypad) {
 	*tid_thread_keypad = &(keypad->threadID);
 }
 
-void get_keypad_entry(struct Keypad *keypad) {
+static void get_keypad_entry(struct Keypad *keypad) {
 	uint16_t key_input;
 	uint32_t button_value;
 	
@@ -150,7 +129,15 @@ void get_keypad_entry(struct Keypad *keypad) {
 		button_value=0xFF;
 	}
 	
-	keypad->key_char=button_value;
+	if (button_value != 0xFF) {
+		if (keypad->old_key_char != button_value) {
+			keypad->key_char = button_value;
+			keypad->new_data_available = 1;
+			keypad->old_key_char = button_value;
+		}
+	} else {
+		keypad->old_key_char = button_value;
+	}
 }
 
 void keypadThread (void const *argument) {

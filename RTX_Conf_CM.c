@@ -62,7 +62,7 @@
 //   <i> Defines default stack size for threads.
 //   <i> Default: 200
 #ifndef OS_STKSIZE
- #define OS_STKSIZE     200
+ #define OS_STKSIZE     300
 #endif
 
 //   <o>Main Thread stack size [bytes] <64-4096:8><#/4>

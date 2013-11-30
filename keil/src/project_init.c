@@ -51,3 +51,49 @@ void init_pushbutton() {
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;																										//Enable the IRQ channel specified by nvic
   NVIC_Init(&NVIC_InitStructure);																																		//Pass struct to NVIC, initialize
 }
+
+void init_TIM5() {
+  NVIC_InitTypeDef NVIC_InitStructure;																								//NVIC initialization struct
+	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;																			//Timer initialization struct
+	
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE); 					//Enable clock to TIM10
+	
+	TIM_TimeBaseStructure.TIM_ClockDivision = 0x0;								//No clock division
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;		//Counts up
+	TIM_TimeBaseStructure.TIM_Period = 0xFFFF;										//Period set for largest dynamic range of standard timer frequencies to be used
+	TIM_TimeBaseStructure.TIM_Prescaler = SystemCoreClock/(2*TIM5_FREQUENCY*TIM_TimeBaseStructure.TIM_Period)-1;									//Set prescaler to determine frequency
+	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0x0;						//Restart RCR count after counting down to this value
+	TIM_TimeBaseInit(TIM5, &TIM_TimeBaseStructure);								//Initialize struct parameters to TIM5
+	
+	TIM_Cmd(TIM5, ENABLE);																				//Enable specified peripheral
+	TIM_ITConfig(TIM5, TIM_IT_Update, ENABLE);										//Enable new interrupt state
+	
+	NVIC_InitStructure.NVIC_IRQChannel = TIM5_IRQn;								//Specify interrupt request channel to be used
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01; 	//Indicates pre-emption priority, 0-15, lower # =higher prriority
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x01; 				//Subpriority value 0-15, lower # =higher prriority
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; 							//Enable interrupt request channel specified earlier
+  NVIC_Init(&NVIC_InitStructure);																//Initialize NVIC for TIM3 with struct params
+}
+
+void init_TIM3() {
+  NVIC_InitTypeDef NVIC_InitStructure;																								//NVIC initialization struct
+	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;																			//Timer initialization struct
+	
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE); 					//Enable clock to TIM10
+	
+	TIM_TimeBaseStructure.TIM_ClockDivision = 0x0;								//No clock division
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;		//Counts up
+	TIM_TimeBaseStructure.TIM_Period = 0xFFFF;										//Period set for largest dynamic range of standard timer frequencies to be used
+	TIM_TimeBaseStructure.TIM_Prescaler = SystemCoreClock/(2*TIM3_FREQUENCY*TIM_TimeBaseStructure.TIM_Period)-1;									//Set prescaler to determine frequency
+	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0x0;						//Restart RCR count after counting down to this value
+	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);								//Initialize struct parameters to TIM5
+	
+	TIM_Cmd(TIM3, ENABLE);																				//Enable specified peripheral
+	TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);										//Enable new interrupt state
+	
+	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;								//Specify interrupt request channel to be used
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x01; 	//Indicates pre-emption priority, 0-15, lower # =higher prriority
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x01; 				//Subpriority value 0-15, lower # =higher prriority
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE; 							//Enable interrupt request channel specified earlier
+  NVIC_Init(&NVIC_InitStructure);																//Initialize NVIC for TIM3 with struct params
+}

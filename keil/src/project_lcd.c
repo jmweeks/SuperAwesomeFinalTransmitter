@@ -1,10 +1,11 @@
 #include "stm32f4xx.h"
 #include "cmsis_os.h"
+#include <string.h>
 
 #include "project_lcd.h"
 
-static void delayMicroseconds(uint32_t microseconds) {
-	uint32_t counter = SystemCoreClock / (microseconds * 1000000);
+static void delayMicroseconds(uint64_t microseconds) {
+	uint32_t counter = (microseconds * SystemCoreClock) / 1000000;
 	while (counter != 0) {
 		counter--;
 	}
@@ -60,9 +61,10 @@ static void readControlRegister(struct Lcd *lcd) {
 
 static void waitUntilNotBusy(struct Lcd *lcd) {
 	readControlRegister(lcd);
+	delayMicroseconds(LCD_WAIT_TIME);
 	while((lcd->state & 0x80) == 0x80) {
-		delayMicroseconds(LCD_WAIT_TIME);
 		readControlRegister(lcd);
+		delayMicroseconds(LCD_WAIT_TIME);
 	}
 }
 
@@ -89,14 +91,15 @@ static void writeControlRegister(struct Lcd *lcd, uint8_t data) {
 	waitUntilNotBusy(lcd);
 }
 
-static void updatePosition(struct Lcd *lcd, uint32_t position) {
-	lcd->cursorPosition = position;
-	if (lcd->cursorPosition >= LCD_WIDTH && lcd->cursorPosition < LCD_SECOND_ROW_STARTING_ADDRESS) {
-		lcd->cursorPosition = LCD_SECOND_ROW_STARTING_ADDRESS;
-	} else if (lcd->cursorPosition >= LCD_SECOND_ROW_STARTING_ADDRESS + LCD_WIDTH - 1) {
-		lcd->cursorPosition = 0;
+static void updatePosition(struct Lcd *lcd, uint8_t position) {
+	readControlRegister(lcd);
+	if (position >= LCD_WIDTH && position < LCD_SECOND_ROW_STARTING_ADDRESS) {
+		writeControlRegister(lcd, 0x80 | LCD_SECOND_ROW_STARTING_ADDRESS);
+	} else if (position >= LCD_SECOND_ROW_STARTING_ADDRESS + LCD_WIDTH) {
+		writeControlRegister(lcd, 0x80 | 0x00);
+	} else if (lcd->cursorPosition != position) {
+		writeControlRegister(lcd, 0x80 | position);
 	}
-	writeControlRegister(lcd, 0x80 | lcd->cursorPosition);
 }
 
 static void writeDataRegister(struct Lcd *lcd, uint8_t data) {
@@ -121,7 +124,23 @@ static void writeDataRegister(struct Lcd *lcd, uint8_t data) {
 	
 	waitUntilNotBusy(lcd);
 	
-	updatePosition(lcd, lcd->cursorPosition+1);
+	if (lcd->cursorPosition >= LCD_WIDTH && lcd->cursorPosition < LCD_SECOND_ROW_STARTING_ADDRESS) {
+		writeControlRegister(lcd, 0x80 | LCD_SECOND_ROW_STARTING_ADDRESS);
+	} else if (lcd->cursorPosition >= LCD_SECOND_ROW_STARTING_ADDRESS + LCD_WIDTH) {
+		writeControlRegister(lcd, 0x80 | 0x00);
+	} 
+	
+	//updatePosition(lcd, lcd->cursorPosition);
+}
+
+static void intToAscii(char number, char data[]) {
+	if (number < 10) {
+		data[0] = '0';
+		data[1] = number+48;
+	} else {
+		data[0] = '1';
+		data[1] = number-10+48;
+	}
 }
 
 void init_lcd(struct Lcd *lcd) {
@@ -142,6 +161,9 @@ void init_lcd(struct Lcd *lcd) {
 	lcd->pinD7 = GPIO_Pin_14;
 	lcd->inReadInitState = 0;
 	lcd->cursorPosition = 0;
+	
+	strncpy(lcd->line1, " Pos:   ,  ,    Mag:    ", 24);
+	strncpy(lcd->line2, "Mode:                   ", 24);
 	
 	RCC_AHB1PeriphClockCmd(lcd->periph, ENABLE);																			//Enable clock to GPIOD
 	
@@ -168,9 +190,12 @@ void init_lcd(struct Lcd *lcd) {
 	waitUntilNotBusy(lcd);
 	
 	writeControlRegister(lcd, 0x28);	//Set 4-bit mode
-	writeControlRegister(lcd, 0x06);	//Set increment cursor
 	writeControlRegister(lcd, 0x0C);	//Set display on
 	writeControlRegister(lcd, 0x01);	//Clear display
+	//writeControlRegister(lcd, 0x0D);
+	
+	writeToLcdPosition(lcd, lcd->line1, sizeof(lcd->line1)/sizeof(lcd->line1[0]), 0);
+	writeToLcdPosition(lcd, lcd->line2, sizeof(lcd->line2)/sizeof(lcd->line2[0]), LCD_SECOND_ROW_STARTING_ADDRESS);
 }
 
 void clearLcd(struct Lcd *lcd) {
@@ -188,10 +213,48 @@ void writeToLcd(struct Lcd *lcd, char text[], uint32_t length) {
 
 void writeToLcdPosition(struct Lcd *lcd, char text[], uint32_t length, uint32_t position) {
 	uint32_t i;
-	if (lcd->cursorPosition != position) {
+	//if (lcd->cursorPosition != position) {
 		updatePosition(lcd, position);
-	}
+	//}
 	for (i=0; i<length; i++) {
 		writeDataRegister(lcd, text[i]);
 	}
+}
+
+void updateLcdData(struct Lcd *lcd, uint32_t y, uint32_t z, uint32_t angle, uint32_t magnet, uint32_t mode) {
+	
+	readControlRegister(lcd);
+	uint8_t previousCursorPosition = lcd->cursorPosition;
+	
+	intToAscii(y, lcd->line1+6);
+	intToAscii(z, lcd->line1+9);
+	intToAscii(angle, lcd->line1+12);
+	if (magnet) {
+		strncpy(lcd->line1+21, "On ", 3);
+	} else {
+		strncpy(lcd->line1+21, "Off", 3);
+	}
+	if (mode) {
+		strncpy(lcd->line2+6, "Keypad            ", 18);
+	} else {
+		strncpy(lcd->line2+6, "Accelerometer     ", 18);
+	}
+	
+	writeToLcdPosition(lcd, lcd->line1, sizeof(lcd->line1)/sizeof(lcd->line1[0]), 0);
+	writeToLcdPosition(lcd, lcd->line2, sizeof(lcd->line2)/sizeof(lcd->line2[0]), LCD_SECOND_ROW_STARTING_ADDRESS);
+	updatePosition(lcd, previousCursorPosition);
+	//osDelay(1);
+	//writeDataRegister(lcd, '0');
+	//readControlRegister(lcd);
+	//osDelay(500);
+}
+
+void setCursor(struct Lcd *lcd, uint32_t position) {
+	updatePosition(lcd, position);
+	//osDelay(1);
+	writeControlRegister(lcd, 0x0D);
+}
+
+void clearCursor(struct Lcd *lcd) {
+	writeControlRegister(lcd, 0x0C);
 }

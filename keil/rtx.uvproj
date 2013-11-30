@@ -477,6 +477,11 @@
               <FileType>1</FileType>
               <FilePath>.\src\project_keypad.c</FilePath>
             </File>
+            <File>
+              <FileName>project_transmitter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\project_transmitter.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
