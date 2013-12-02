@@ -5,6 +5,9 @@
 
 #define TRANSMIT_DATA_SIZE 5
 
+#ifndef TRANSMITTER_STRUCT
+#define TRANSMITTER_STRUCT
+
 struct Transmitter {
 	uint8_t data[TRANSMIT_DATA_SIZE];
 	uint8_t state;
@@ -12,6 +15,8 @@ struct Transmitter {
 	osThreadId threadID;
 	osMutexId mutexID;
 };
+
+#endif
 
 void init_transmitter(struct Transmitter *tranmistter, osThreadId **tid_thread_transmitter);
 

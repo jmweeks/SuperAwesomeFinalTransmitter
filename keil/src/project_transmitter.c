@@ -34,7 +34,7 @@ void transmitterThread (void const *argument) {
 	while(1) {
 		osSignalWait(0x0001, osWaitForever);
 		osMutexWait(transmitter->mutexID, osWaitForever);
-		wireless_TX(transmitter->data, TRANSMIT_DATA_SIZE, &(transmitter->state), &(transmitter->buffer_space));
+		wireless_TX(transmitter);
 		osMutexRelease(transmitter->mutexID);
 	}
 }

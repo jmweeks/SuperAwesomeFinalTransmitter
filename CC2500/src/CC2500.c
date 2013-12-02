@@ -1,5 +1,9 @@
-#include "CC2500.h"
+#include "stm32f4xx.h"
+#include "stm32f4xx_conf.h"
 #include "cmsis_os.h"
+
+#include "project_receiver.h"
+#include "project_transmitter.h"
 
 /** @defgroup STM32F4_DISCOVERY_CC2500_Private_Defines
   * @{
@@ -478,46 +482,46 @@ void goToRX(uint8_t *state, uint8_t *buffer_space) {
 	
 	CC2500_StrobeSend(SCAL_R,state,buffer_space);
 	osDelay(STROBE_DELAY);
-
-	CC2500_StrobeSend(SRX_R,state,buffer_space);
-	osDelay(STROBE_DELAY);
-	
-	CC2500_StrobeSend(SNOP_R,state,buffer_space);
-	osDelay(STROBE_DELAY);
 }
 
-void wireless_TX(uint8_t data[], uint32_t length, uint8_t *state, uint8_t *buffer_space) {
-	uint8_t tripleData[length*3];
+void wireless_TX(struct Transmitter *transmitter) {
+	osMutexWait(transmitter->mutexID, osWaitForever);
+	uint8_t tripleData[3*sizeof(transmitter->data)/sizeof(transmitter->data[0])];
 	uint32_t i;
 	
-	for (i=0; i<length; i++) {
-		tripleData[3*i] = data[i] | ((3*i)<<4);
-		tripleData[3*i+1] = data[i] | ((3*i+1)<<4);
-		tripleData[3*i+2] = data[i] | ((3*i+2)<<4);
+	for (i=0; i<sizeof(transmitter->data)/sizeof(transmitter->data[0]); i++) {
+		tripleData[3*i] = transmitter->data[i] | ((3*i)<<4);
+		tripleData[3*i+1] = transmitter->data[i] | ((3*i+1)<<4);
+		tripleData[3*i+2] = transmitter->data[i] | ((3*i+2)<<4);
 	}
 
 	tripleData[0] = tripleData[0] | 0xF0;
-	CC2500_Write(tripleData, FIFO_REG, length*3);
+	CC2500_Write(tripleData, FIFO_REG, 3*sizeof(transmitter->data)/sizeof(transmitter->data[0]));
+	osMutexRelease(transmitter->mutexID);
 	osDelay(STROBE_DELAY);
 	
-	CC2500_StrobeSend(SNOP_T,state,buffer_space);	
+	osMutexWait(transmitter->mutexID, osWaitForever);
+	CC2500_StrobeSend(SNOP_T,&(transmitter->state),&(transmitter->buffer_space));
+	osMutexRelease(transmitter->mutexID);	
 	osDelay(STROBE_DELAY);
 }
 
-void wireless_RX(uint8_t data[], uint32_t length, uint8_t *state, uint8_t *buffer_space) {
+void wireless_RX(struct Receiver *receiver) {
 	uint8_t i=0;
 	uint8_t temp_data=0;
-	uint8_t raw_data[12];
-	int j;
 	
-	CC2500_StrobeSend(SRX_R,state,buffer_space);
+	osMutexWait(receiver->mutexID, osWaitForever);	
+	uint8_t raw_data[sizeof(receiver->data)/sizeof(receiver->data[0]) * 3];
+	CC2500_StrobeSend(SRX_R,&(receiver->state),&(receiver->buffer_space));
+	osMutexRelease(receiver->mutexID);
+	
 	osDelay(STROBE_DELAY);
 	
-	while (i<(12)) {
-		CC2500_StrobeSend(SNOP_R,state,buffer_space);	
-
+	while (i<(sizeof(receiver->data)/sizeof(receiver->data[0]) * 3)) {
+		osMutexWait(receiver->mutexID, osWaitForever);
+		CC2500_StrobeSend(SNOP_R,&(receiver->state),&(receiver->buffer_space));	
 		
-		if (*buffer_space>0) {
+		if (receiver->buffer_space>0) {
 			CC2500_Read(&temp_data, 0x3F, 1);
 			if ((temp_data&0xF0)==0xF0) {
 				raw_data[0]=temp_data&0x0F;
@@ -532,14 +536,22 @@ void wireless_RX(uint8_t data[], uint32_t length, uint8_t *state, uint8_t *buffe
 			}
 		}
 		
+		osMutexRelease(receiver->mutexID);
+		
 		osDelay(STROBE_DELAY);
 	}
-	for(j=0;j<4;j++){
-		data[j] = ((raw_data[3*j]&raw_data[3*j+1]) | (raw_data[3*j]&raw_data[3*j+2]) | (raw_data[3*j+2]&raw_data[3*j+1]));
+	
+	osMutexWait(receiver->mutexID, osWaitForever);
+	for(uint32_t j=0;j<sizeof(receiver->data)/sizeof(receiver->data[0]);j++){
+		receiver->data[j] = ((raw_data[3*j]&raw_data[3*j+1]) | (raw_data[3*j]&raw_data[3*j+2]) | (raw_data[3*j+2]&raw_data[3*j+1]));
 	}
 	
-	CC2500_StrobeSend(SIDLE_R,state,buffer_space);
+	CC2500_StrobeSend(SIDLE_R,&(receiver->state),&(receiver->buffer_space));
+	osMutexRelease(receiver->mutexID);
 	osDelay(STROBE_DELAY);
-	CC2500_StrobeSend(SNOP_R,state,buffer_space);
-	osDelay(STROBE_DELAY);	
+	
+	osMutexWait(receiver->mutexID, osWaitForever);
+	CC2500_StrobeSend(SNOP_R,&(receiver->state),&(receiver->buffer_space));
+	osMutexRelease(receiver->mutexID);
+	osDelay(STROBE_DELAY);
 }
