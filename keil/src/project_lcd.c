@@ -138,32 +138,26 @@ static void intToAscii(char number, char data[]) {
 		data[0] = '0';
 		data[1] = number+48;
 	} else {
-		data[0] = '1';
-		data[1] = number-10+48;
+		data[0] = number/10+48;
+		data[1] = (number+50)%10+48;
 	}
 }
 
-void init_lcd(struct Lcd *lcd) {
-	
-	//PD0: RS
-	//PD1: R/W
-	//PD2: E
-	//PD3-6: D4-7
-	
-	lcd->GPIO = GPIOD;
-	lcd->periph = RCC_AHB1Periph_GPIOD;
-	lcd->pinRS = GPIO_Pin_8;
-	lcd->pinRW = GPIO_Pin_9;
-	lcd->pinE = GPIO_Pin_10;
-	lcd->pinD4 = GPIO_Pin_11;
-	lcd->pinD5 = GPIO_Pin_12;
-	lcd->pinD6 = GPIO_Pin_13;
-	lcd->pinD7 = GPIO_Pin_14;
+void init_lcd(struct Lcd *lcd, struct LcdInit *lcdInit) {
+	lcd->GPIO = lcdInit->GPIO;
+	lcd->periph = lcdInit->periph;
+	lcd->pinRS = lcdInit->pinRS;
+	lcd->pinRW = lcdInit->pinRW;
+	lcd->pinE = lcdInit->pinE;
+	lcd->pinD4 = lcdInit->pinD4;
+	lcd->pinD5 = lcdInit->pinD5;
+	lcd->pinD6 = lcdInit->pinD6;
+	lcd->pinD7 = lcdInit->pinD7;
 	lcd->inReadInitState = 0;
 	lcd->cursorPosition = 0;
 	
 	strncpy(lcd->line1, " Pos:   ,  ,    Mag:    ", 24);
-	strncpy(lcd->line2, "Mode:                   ", 24);
+	strncpy(lcd->line2, "Mode:          Time:    ", 24);
 	
 	RCC_AHB1PeriphClockCmd(lcd->periph, ENABLE);																			//Enable clock to GPIOD
 	
@@ -192,7 +186,6 @@ void init_lcd(struct Lcd *lcd) {
 	writeControlRegister(lcd, 0x28);	//Set 4-bit mode
 	writeControlRegister(lcd, 0x0C);	//Set display on
 	writeControlRegister(lcd, 0x01);	//Clear display
-	//writeControlRegister(lcd, 0x0D);
 	
 	writeToLcdPosition(lcd, lcd->line1, sizeof(lcd->line1)/sizeof(lcd->line1[0]), 0);
 	writeToLcdPosition(lcd, lcd->line2, sizeof(lcd->line2)/sizeof(lcd->line2[0]), LCD_SECOND_ROW_STARTING_ADDRESS);
@@ -221,7 +214,7 @@ void writeToLcdPosition(struct Lcd *lcd, char text[], uint32_t length, uint32_t 
 	}
 }
 
-void updateLcdData(struct Lcd *lcd, uint32_t y, uint32_t z, uint32_t angle, uint32_t magnet, uint32_t mode) {
+void updateLcdData(struct Lcd *lcd, uint32_t y, uint32_t z, uint32_t angle, uint32_t magnet, uint32_t mode, uint32_t time) {
 	
 	readControlRegister(lcd);
 	uint8_t previousCursorPosition = lcd->cursorPosition;
@@ -237,7 +230,8 @@ void updateLcdData(struct Lcd *lcd, uint32_t y, uint32_t z, uint32_t angle, uint
 	if (mode) {
 		strncpy(lcd->line2+6, "Keypad            ", 18);
 	} else {
-		strncpy(lcd->line2+6, "Accelerometer     ", 18);
+		strncpy(lcd->line2+6, "Accel     Time:   ", 18);
+		intToAscii(time, lcd->line2+22);
 	}
 	
 	writeToLcdPosition(lcd, lcd->line1, sizeof(lcd->line1)/sizeof(lcd->line1[0]), 0);

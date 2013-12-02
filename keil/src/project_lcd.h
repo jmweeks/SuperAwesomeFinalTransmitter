@@ -22,10 +22,22 @@ struct Lcd {
 	char line2[LCD_WIDTH];
 };
 
-void init_lcd(struct Lcd *lcd);
+struct LcdInit {
+	GPIO_TypeDef *GPIO;
+	uint32_t periph;
+	uint16_t pinRS;
+	uint16_t pinRW;
+	uint16_t pinE;
+	uint16_t pinD4;
+	uint16_t pinD5;
+	uint16_t pinD6;
+	uint16_t pinD7;
+};
+
+void init_lcd(struct Lcd *lcd, struct LcdInit *lcdInit);
 void clearLcd(struct Lcd *lcd);
 void writeToLcd(struct Lcd *lcd, char text[], uint32_t length);
 void writeToLcdPosition(struct Lcd *lcd, char text[], uint32_t length, uint32_t position);
-void updateLcdData(struct Lcd *lcd, uint32_t y, uint32_t z, uint32_t angle, uint32_t magnet, uint32_t mode);
+void updateLcdData(struct Lcd *lcd, uint32_t y, uint32_t z, uint32_t angle, uint32_t magnet, uint32_t mode, uint32_t time);
 void setCursor(struct Lcd *lcd, uint32_t position);
 void clearCursor(struct Lcd *lcd);

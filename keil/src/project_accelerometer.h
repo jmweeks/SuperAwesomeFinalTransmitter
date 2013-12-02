@@ -16,8 +16,6 @@
 #include "project_filter.h"
 #include "project_init.h"
 
-#define ACCELEROMETER_SAMPLE_FREQUENCY 25
-
 #ifndef PI																												//Pi safety
 #define PI 3.14159																								//It's Pi...
 #endif

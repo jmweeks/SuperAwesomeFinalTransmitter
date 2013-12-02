@@ -10,6 +10,8 @@
 #include "project_lcd.h"
 #include "CC2500.h"
 #include "project_transmitter.h"
+#include "project_timeLeft.h"
+#include "project_pushbutton.h"
 
 /*!
  @brief Thread to perform menial tasks such as switching LEDs
@@ -17,10 +19,14 @@
  */
 void thread(void const *argument);
 
+void updateTransmitterData(int8_t y, int8_t z, int8_t angle, int8_t magnet, int8_t time);
+
 static struct Keypad keypad;
 static struct Lcd lcd;
 static struct Orientation orientation;
 static struct Transmitter transmitter;
+static struct TimeLeft timeLeft;
+static struct Pushbutton pushbutton;
 
 //! Thread structure for above thread
 osThreadDef(thread, osPriorityNormal, 1, 0);
@@ -28,6 +34,8 @@ osThreadDef(thread, osPriorityNormal, 1, 0);
 static osThreadId *tid_thread_keypad;
 static osThreadId *tid_thread_orientation;
 static osThreadId *tid_thread_transmitter;
+static osThreadId *tid_thread_timeLeft;
+static osThreadId *tid_thread_pushbutton;
 static osThreadId tid_thread;
 
 static uint32_t mode = 0;
@@ -41,16 +49,37 @@ uint8_t buffer_space;
  @brief Program entry point
  */
 int main (void) {
+	struct LcdInit lcdInit;
+	struct KeypadInit keypadInit;
 	
-	//CC2500_Init();
-	init_keypad(&keypad, &tid_thread_keypad);
-	init_lcd(&lcd);
+	lcdInit.GPIO = GPIOD;
+	lcdInit.periph = RCC_AHB1Periph_GPIOD;
+	lcdInit.pinRS = GPIO_Pin_8;
+	lcdInit.pinRW = GPIO_Pin_9;
+	lcdInit.pinE = GPIO_Pin_10;
+	lcdInit.pinD4 = GPIO_Pin_11;
+	lcdInit.pinD5 = GPIO_Pin_12;
+	lcdInit.pinD6 = GPIO_Pin_13;
+	lcdInit.pinD7 = GPIO_Pin_14;
+	
+	keypadInit.GPIO = GPIOD;
+	keypadInit.periph = RCC_AHB1Periph_GPIOD;
+	keypadInit.rowPins = GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;
+	keypadInit.colPins = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;
+	
+	init_TIM5(); //Keypad
+	init_TIM2(); //Accelerometer
+	init_TIM3(); //Transmitter
+	init_TIM4(); //TimeLeft
+	init_accelerometer();
+	init_userButton();
+	
+	init_keypad(&keypad, &tid_thread_keypad, &keypadInit);
+	init_lcd(&lcd, &lcdInit);
 	init_orientation(&orientation, &tid_thread_orientation);
-	init_pushbutton();
 	init_transmitter(&transmitter, &tid_thread_transmitter);
-	//CC2500_config_transmitter();
-	
-	//goToTX(&state, &buffer_space);
+	init_timeLeft(&timeLeft, &tid_thread_timeLeft);
+	init_pushbutton(&pushbutton, &tid_thread_pushbutton);
 	
 	tid_thread = osThreadCreate(osThread(thread), NULL);
 
@@ -58,27 +87,43 @@ int main (void) {
 }
 
 void thread (void const *argument) {
-	uint8_t data[4];
 	uint8_t y, z, angle, magnet;
 	uint8_t tempY, tempZ, tempAngle;
-	char yAscii[2], zAscii[2], angleAscii[2], magnetAscii[3];
-	uint16_t currentKey, previousKey;
+	uint16_t currentKey;
 	uint32_t i = 0;
+	uint32_t time = 0;
+	uint32_t initialTime = 0;
+	uint32_t isStarted = 0;
+
+	osMutexWait(timeLeft.mutexID, osWaitForever);
+	initialTime = timeLeft.initialTime;
+	osMutexRelease(timeLeft.mutexID);
+
 	while(1) {
+		osMutexWait(pushbutton.mutexID, osWaitForever);
+		if (pushbutton.buttonPressed) {
+			pushbutton_pressed = 1;
+			pushbutton.buttonPressed = 0;
+		} else {
+			pushbutton_pressed = 0;
+		}
+		osMutexRelease(pushbutton.mutexID);
 		
 		if (pushbutton_pressed) {
 			if (mode) {
 				mode = 0;
+				isStarted = 0;
+				y = STARTING_Y;
+				z = STARTING_Z;
+				angle = STARTING_ANGLE;
+				magnet = STARTING_MAGNET;
 				clearCursor(&lcd);
+				osMutexWait(timeLeft.mutexID, osWaitForever);
+				resetTimeLeft(&timeLeft);
+				osMutexRelease(timeLeft.mutexID);
 			} else {
 				mode = 1;
 			}
-
-			osDelay(PUSHBUTTON_DELAY);																				//delay 10ms (debounce)
-			while (GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_0)) {	//reading pushbutton input
-				osDelay(PUSHBUTTON_DELAY);																			//delay 10ms (debounce)
-			}
-			pushbutton_pressed = 0;
 		}
 		
 		osMutexWait(keypad.mutexID, osWaitForever);
@@ -141,60 +186,92 @@ void thread (void const *argument) {
 					i = 0;
 				}
 			}
-			data[0] = y;
-			data[1] = z;
-			data[2] = angle;
-			data[3] = magnet;
-			if (currentKey == 0x0B) {
-				osMutexWait(transmitter.mutexID, osWaitForever);
-				uint32_t c;
-				for (c=0; c<sizeof(transmitter.data)/sizeof(transmitter.data[0]); c++) {
-					transmitter.data[c] = data[c];
-				}
-				osMutexRelease(transmitter.mutexID);
-			}
+			
+			updateTransmitterData(y, z, angle, magnet, 0);
+			
 			setCursor(&lcd, 3*i/2+6);
 		} else {
-			osMutexWait(orientation.mutexID, osWaitForever);
-			y = 3 * (Y_MAX + 1) * (orientation.moving_average_pitch.average - ORIENTATION_MIN) / (ORIENTATION_MAX - ORIENTATION_MIN) - (Y_MAX + 1);
-			angle = 3 * (ANGLE_MAX + 1) * (-orientation.moving_average_roll.average - ORIENTATION_MIN) / (ORIENTATION_MAX - ORIENTATION_MIN) - (ANGLE_MAX + 1);
-			if (y < Y_MIN) {
-				y = Y_MIN;
-			} else if (y > Y_MAX) {
-				y = Y_MAX;
-			}
-			if (angle < ANGLE_MIN) {
-				angle = ANGLE_MIN;
-			} else if (angle > ANGLE_MAX) {
-				angle = ANGLE_MAX;
-			}
-			osMutexRelease(orientation.mutexID);
 			if (currentKey == 0x0B) {
+				isStarted = 1;
+			}
+			
+			osMutexWait(timeLeft.mutexID, osWaitForever);
+			time = timeLeft.timeLeft;
+			osMutexRelease(timeLeft.mutexID);
+			
+			if (!time) {
+				isStarted = 0;
+				y = STARTING_Y;
+				z = STARTING_Z;
+				angle = STARTING_ANGLE;
+				magnet = STARTING_MAGNET;
+				updateTransmitterData(y, z, angle, magnet, 0);
+			}
+				
+			if (!isStarted) {
+				osMutexWait(timeLeft.mutexID, osWaitForever);
+				timeLeft.started = 0;
+				osMutexRelease(timeLeft.mutexID);
+				
+				updateTransmitterData(y, z, angle, magnet, 0);
+			} else {
+				osMutexWait(timeLeft.mutexID, osWaitForever);
+				timeLeft.started = 1;
+				osMutexRelease(timeLeft.mutexID);
+				
+				osMutexWait(orientation.mutexID, osWaitForever);
+				y = 3 * (Y_MAX + 1) * (orientation.moving_average_pitch.average - ORIENTATION_MIN) / (ORIENTATION_MAX - ORIENTATION_MIN) - (Y_MAX + 1);
+				angle = 3 * (ANGLE_MAX + 1) * (-orientation.moving_average_roll.average - ORIENTATION_MIN) / (ORIENTATION_MAX - ORIENTATION_MIN) - (ANGLE_MAX + 1);
+				if (y < Y_MIN) {
+					y = Y_MIN;
+				} else if (y > Y_MAX) {
+					y = Y_MAX;
+				}
+				if (angle < ANGLE_MIN) {
+					angle = ANGLE_MIN;
+				} else if (angle > ANGLE_MAX) {
+					angle = ANGLE_MAX;
+				}
+				osMutexRelease(orientation.mutexID);
+				
+				if (currentKey == 0x0B) {
+					if (z) {
+						z = 0;
+					} else {
+						z = 1;
+					}
+				}
 				if (z) {
-					z = 0;
+					updateTransmitterData(y, z, angle, magnet, time*16/initialTime);
 				} else {
-					z = 1;
+					updateTransmitterData(NO_UPDATE, z, NO_UPDATE, magnet, time*16/initialTime);
 				}
 			}
-			if (z) {
-				data[0] = y;
-			}
-			data[1] = z;
-			if (z) {
-					data[2] = angle;
-			}
-			data[3] = magnet;
-			osMutexWait(transmitter.mutexID, osWaitForever);
-			uint32_t c;
-			for (c=0; c<sizeof(transmitter.data)/sizeof(transmitter.data[0]); c++) {
-				transmitter.data[c] = data[c];
-			}
-			osMutexRelease(transmitter.mutexID);
 		}
 			
-		updateLcdData(&lcd, y, z, angle, magnet, mode);
+		updateLcdData(&lcd, y, z, angle, magnet, mode, time);
 		osDelay(100);
 	}
+}
+
+void updateTransmitterData(int8_t y, int8_t z, int8_t angle, int8_t magnet, int8_t time) {
+	osMutexWait(transmitter.mutexID, osWaitForever);
+	if (y>=0) {
+		transmitter.data[0] = y;
+	}
+	if (z>=0) {
+		transmitter.data[1] = z;
+	}
+	if (angle>=0) {
+		transmitter.data[2] = angle;
+	}
+	if (magnet>=0) {
+		transmitter.data[3] = magnet;
+	}
+	if (time>=0) {
+		transmitter.data[4] = time;
+	}
+	osMutexRelease(transmitter.mutexID);
 }
 
 void TIM2_IRQHandler(void) {
@@ -221,6 +298,14 @@ void TIM5_IRQHandler(void) {
   }
 }
 
+void TIM4_IRQHandler(void) {
+  if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET)			//Checks interrupt status register to ensure an interrupt is pending
+  {
+    TIM_ClearITPendingBit(TIM4, TIM_IT_Update);						//Reset interrupt pending bit
+		osSignalSet(*tid_thread_timeLeft, 0x0001);								//send signal to keypad thread
+  }
+}
+
 /**
   * @brief  IRQ handler for EXTI0
 	* @param  None
@@ -232,6 +317,6 @@ void EXTI0_IRQHandler(void)
   if(EXTI_GetITStatus(EXTI_Line0) != RESET)								//Checks interrupt status register to ensure an interrupt is pending
   {
     EXTI_ClearITPendingBit(EXTI_Line0);										//Reset interrupt pending bit
-		pushbutton_pressed++;
+		osSignalSet(*tid_thread_pushbutton, 0x0001);
   }
 }

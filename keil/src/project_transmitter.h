@@ -3,7 +3,7 @@
 
 #include "CC2500.h"
 
-#define TRANSMIT_DATA_SIZE 4
+#define TRANSMIT_DATA_SIZE 5
 
 struct Transmitter {
 	uint8_t data[TRANSMIT_DATA_SIZE];

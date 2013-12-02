@@ -25,8 +25,6 @@ void init_transmitter(struct Transmitter *transmitter, osThreadId **tid_thread_t
 	transmitter->mutexID=osMutexCreate(osMutex(transmitterMutex));
 	
 	*tid_thread_transmitter = &(transmitter->threadID);
-	
-	init_TIM3();
 }
 
 void transmitterThread (void const *argument) {

@@ -438,16 +438,6 @@
               <FilePath>.\src\project_init.c</FilePath>
             </File>
             <File>
-              <FileName>project_servo.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\project_servo.c</FilePath>
-            </File>
-            <File>
-              <FileName>project_pwm.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\project_pwm.c</FilePath>
-            </File>
-            <File>
               <FileName>project_accelerometer.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\project_accelerometer.c</FilePath>
@@ -463,16 +453,6 @@
               <FilePath>.\src\project_lcd.c</FilePath>
             </File>
             <File>
-              <FileName>project_magnet.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\project_magnet.c</FilePath>
-            </File>
-            <File>
-              <FileName>project_robot.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\src\project_robot.c</FilePath>
-            </File>
-            <File>
               <FileName>project_keypad.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\project_keypad.c</FilePath>
@@ -481,6 +461,16 @@
               <FileName>project_transmitter.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\project_transmitter.c</FilePath>
+            </File>
+            <File>
+              <FileName>project_timeLeft.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\project_timeLeft.c</FilePath>
+            </File>
+            <File>
+              <FileName>project_pushbutton.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\project_pushbutton.c</FilePath>
             </File>
           </Files>
         </Group>

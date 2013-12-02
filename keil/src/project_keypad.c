@@ -4,54 +4,48 @@
 #include "project_keypad.h"
 #include "project_init.h"
 
-static void init_keypad_row_output() {
+static void init_keypad_row_output(struct Keypad *keypad) {
 	GPIO_InitTypeDef GPIO_InitStructure;																														//Initialize nested vector interrupt controller structure
 	
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);																			//Enable clock to GPIOD
+  RCC_AHB1PeriphClockCmd(keypad->periph, ENABLE);																			//Enable clock to GPIOD
   
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;			//Specify which LEDs, on which pins
+  GPIO_InitStructure.GPIO_Pin = keypad->colPins;			//Specify which LEDs, on which pins
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;																							//Aternate function mode to work with TIM4
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;																					//Set speed
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;																						//Push-pull
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;																					//No pull - output
-  GPIO_Init(GPIOD, &GPIO_InitStructure);
+  GPIO_Init(keypad->GPIO, &GPIO_InitStructure);
 	  
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;			//Specify which LEDs, on which pins
+  GPIO_InitStructure.GPIO_Pin = keypad->rowPins;			//Specify which LEDs, on which pins
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;																					//Aternate function mode to work with TIM4
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;																			//Set speed
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;																				//Push-pull
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;																					//No pull - output
-  GPIO_Init(GPIOD, &GPIO_InitStructure);
+  GPIO_Init(keypad->GPIO, &GPIO_InitStructure);
 	
-	GPIO_SetBits(GPIOD, GPIO_Pin_0);
-	GPIO_SetBits(GPIOD, GPIO_Pin_1);
-	GPIO_SetBits(GPIOD, GPIO_Pin_2);
-	GPIO_SetBits(GPIOD, GPIO_Pin_3);
+	GPIO_SetBits(keypad->GPIO, keypad->colPins);
 }
 
-static void init_keypad_column_output() {
+static void init_keypad_column_output(struct Keypad *keypad) {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);																	//Enable clock to GPIOD
+  RCC_AHB1PeriphClockCmd(keypad->periph, ENABLE);																	//Enable clock to GPIOD
   
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;			//
+  GPIO_InitStructure.GPIO_Pin = keypad->colPins;			//
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;																					//
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;																			//Set speed
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;																				//
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;																					//
   GPIO_Init(GPIOD, &GPIO_InitStructure);
 	  
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;			//Specify which LEDs, on which pins
+  GPIO_InitStructure.GPIO_Pin = keypad->rowPins;			//Specify which LEDs, on which pins
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;																					//
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;																			//Set speed
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;																				//
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;																				//
   GPIO_Init(GPIOD, &GPIO_InitStructure);
 	
-	GPIO_SetBits(GPIOD, GPIO_Pin_4);
-	GPIO_SetBits(GPIOD, GPIO_Pin_5);
-	GPIO_SetBits(GPIOD, GPIO_Pin_6);
-	GPIO_SetBits(GPIOD, GPIO_Pin_7);
+	GPIO_SetBits(keypad->GPIO, keypad->rowPins);
 }
 
 static void get_button_press(struct Keypad *keypad) {
@@ -59,12 +53,12 @@ static void get_button_press(struct Keypad *keypad) {
 	uint8_t column_press;									//
 	uint8_t test;
 	
-	init_keypad_row_output();							//reinitialize the rows to be outputs for next check
+	init_keypad_row_output(keypad);							//reinitialize the rows to be outputs for next check
 	
 	row_press = GPIO_ReadInputData(GPIOD) & (GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7);								//get GPIOD data register
 	keypad->row_output=row_press;					//set the struct row value
 	
-	init_keypad_column_output();					//reinitialize columns as outputs so we can find key press
+	init_keypad_column_output(keypad);					//reinitialize columns as outputs so we can find key press
 	
 	column_press = GPIO_ReadInputData(GPIOD) & (GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3);						//get GPIOD data register again
 	keypad->column_output=column_press;		//set the struct column value
@@ -74,7 +68,7 @@ static void get_button_press(struct Keypad *keypad) {
 	keypad->key_press = test;
 }
 
-void init_keypad(struct Keypad *keypad, osThreadId **tid_thread_keypad) {
+void init_keypad(struct Keypad *keypad, osThreadId **tid_thread_keypad, struct KeypadInit *keypadInit) {
 	keypad->row_output					=0x0;
 	keypad->column_output				=0x0;
 	keypad->key_press						=0x0;
@@ -82,7 +76,10 @@ void init_keypad(struct Keypad *keypad, osThreadId **tid_thread_keypad) {
 	keypad->new_data_available	=0x0;
 	keypad->old_key_char				=0x0;
 	
-	init_TIM5();
+	keypad->GPIO = keypadInit->GPIO;
+	keypad->periph = keypadInit->periph;
+	keypad->rowPins = keypadInit->rowPins;
+	keypad->colPins = keypadInit->colPins;
 	
 	osThreadDef(keypadThread, osPriorityNormal, 1, 0);
 	keypad->threadID = osThreadCreate(osThread(keypadThread), keypad);
