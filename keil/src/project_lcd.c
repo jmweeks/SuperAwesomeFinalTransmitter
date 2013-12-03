@@ -1,9 +1,18 @@
+/*!
+	@file project_lcd.c
+	Source file used for LCD initialization and functionality.
+*/
 #include "stm32f4xx.h"
 #include "cmsis_os.h"
 #include <string.h>
 
 #include "project_lcd.h"
 
+/*!
+ @brief Custom delay function that accepts delay values in microseconds.
+ @param microseconds: amount of delay expressed as a uint64_t.
+ @retval None
+ */
 static void delayMicroseconds(uint64_t microseconds) {
 	uint32_t counter = (microseconds * SystemCoreClock) / 1000000;
 	while (counter != 0) {
@@ -11,6 +20,11 @@ static void delayMicroseconds(uint64_t microseconds) {
 	}
 }
 
+/*!
+ @brief Initializes the LCD and sets it to "Read" state.
+ @param *lcd: pointer to Lcd structure.
+ @retval None
+ */
 static void init_read(struct Lcd *lcd) {
 	GPIO_InitTypeDef GPIO_InitStructure;
   
@@ -24,6 +38,11 @@ static void init_read(struct Lcd *lcd) {
 	lcd->inReadInitState = 1;
 }
 
+/*!
+ @brief Initializes the LCD and sets it to "Write" state.
+ @param *lcd: pointer to Lcd structure.
+ @retval None
+ */
 static void init_write(struct Lcd *lcd) {
 	GPIO_InitTypeDef GPIO_InitStructure;
   
@@ -36,7 +55,7 @@ static void init_write(struct Lcd *lcd) {
 	
 	lcd->inReadInitState = 0;
 }
-
+//exe cmd or updates cursor position
 static void readControlRegister(struct Lcd *lcd) {
 	if (!lcd->inReadInitState) {
 		init_read(lcd);
@@ -59,6 +78,11 @@ static void readControlRegister(struct Lcd *lcd) {
 	lcd->cursorPosition = lcd->state & 0x7F;
 }
 
+/*!
+ @brief Function that waits until LCD is not busy executing a command.
+ @param *lcd: pointer to Lcd structure.
+ @retval None
+ */
 static void waitUntilNotBusy(struct Lcd *lcd) {
 	readControlRegister(lcd);
 	delayMicroseconds(LCD_WAIT_TIME);
@@ -68,6 +92,13 @@ static void waitUntilNotBusy(struct Lcd *lcd) {
 	}
 }
 
+/*!
+ @brief Function that writes to the LCD control register, which executes commands such as updating address register
+				(select which segment to write to), clear LCD, turn cursor on or off, etc.
+ @param *lcd: pointer to Lcd structure.
+ @param data: data byte to write to LCD
+ @retval None
+ */
 static void writeControlRegister(struct Lcd *lcd, uint8_t data) {
 	
 	if (lcd->inReadInitState) {
@@ -91,6 +122,12 @@ static void writeControlRegister(struct Lcd *lcd, uint8_t data) {
 	waitUntilNotBusy(lcd);
 }
 
+/*!
+ @brief Function that updates the cursor position on the LCD.
+ @param *lcd: pointer to Lcd structure.
+ @param position: new position of cursor
+ @retval None
+ */
 static void updatePosition(struct Lcd *lcd, uint8_t position) {
 	readControlRegister(lcd);
 	if (position >= LCD_WIDTH && position < LCD_SECOND_ROW_STARTING_ADDRESS) {
@@ -102,6 +139,12 @@ static void updatePosition(struct Lcd *lcd, uint8_t position) {
 	}
 }
 
+/*!
+ @brief Function that writes to the LCD data (display) registers.
+ @param *lcd: pointer to Lcd structure.
+ @param data: data byte to display to LCD
+ @retval None
+ */
 static void writeDataRegister(struct Lcd *lcd, uint8_t data) {
 	
 	if (lcd->inReadInitState) {
@@ -133,6 +176,13 @@ static void writeDataRegister(struct Lcd *lcd, uint8_t data) {
 	//updatePosition(lcd, lcd->cursorPosition);
 }
 
+
+/*!
+ @brief converts an integer to its ascii representation
+ @param number: Number to convert to ascii
+ @param data[]: array which stores ascii representation of number
+ @retval None
+ */
 static void intToAscii(char number, char data[]) {
 	if (number < 10) {
 		data[0] = '0';
@@ -143,6 +193,12 @@ static void intToAscii(char number, char data[]) {
 	}
 }
 
+/*!
+ @brief Initializes the LCD peripheral.
+ @param *lcd: pointer to Lcd structure.
+ @param *lcdInit: pointer to LcdInit structure.
+ @retval None
+ */
 void init_lcd(struct Lcd *lcd, struct LcdInit *lcdInit) {
 	lcd->GPIO = lcdInit->GPIO;
 	lcd->periph = lcdInit->periph;
@@ -191,11 +247,23 @@ void init_lcd(struct Lcd *lcd, struct LcdInit *lcdInit) {
 	writeToLcdPosition(lcd, lcd->line2, sizeof(lcd->line2)/sizeof(lcd->line2[0]), LCD_SECOND_ROW_STARTING_ADDRESS);
 }
 
+
+/*!
+ @brief Clears the LCD.
+ @param *lcd: pointer to Lcd structure.
+ @retval None
+ */
 void clearLcd(struct Lcd *lcd) {
 	writeControlRegister(lcd, 0x01);
 	lcd->cursorPosition = 0;
 }
 
+/*!
+ @brief Writes text to the LCD. 
+ @param *lcd: pointer to Lcd structure.
+ @param *text: pointer to a c-string. 
+ @param length: length of string to write to LCD
+ */
 void writeToLcd(struct Lcd *lcd, char text[], uint32_t length) {
 	uint32_t i;
 	clearLcd(lcd);
@@ -204,6 +272,15 @@ void writeToLcd(struct Lcd *lcd, char text[], uint32_t length) {
 	}
 }
 
+
+/*!
+ @brief Writes text to the LCD at the indicated position.
+ @param *lcd: pointer to Lcd structure.
+ @param *text: pointer to a c-string. 
+ @param length: length of string to write to LCD
+ @param position: position in LCD where we need to write the c-string.
+ @retval None
+ */
 void writeToLcdPosition(struct Lcd *lcd, char text[], uint32_t length, uint32_t position) {
 	uint32_t i;
 	//if (lcd->cursorPosition != position) {
@@ -214,6 +291,11 @@ void writeToLcdPosition(struct Lcd *lcd, char text[], uint32_t length, uint32_t 
 	}
 }
 
+/*!
+ @brief Displays various information on the LCD, such as the position, angle, magnet state (ON/OFF), user mode (manual, accelerometer), time left.
+ @param *lcd: pointer to Lcd structure.
+ @retval None
+ */
 void updateLcdData(struct Lcd *lcd, uint32_t y, uint32_t z, uint32_t angle, uint32_t magnet, uint32_t mode, uint32_t time) {
 	
 	readControlRegister(lcd);
@@ -243,12 +325,23 @@ void updateLcdData(struct Lcd *lcd, uint32_t y, uint32_t z, uint32_t angle, uint
 	//osDelay(500);
 }
 
+/*!
+ @brief Sets the cursor of the LCD at the desired position.
+ @param *lcd: pointer to Lcd structure.
+ @param position: position where we want to move LCD cursor
+ @retval None
+ */
 void setCursor(struct Lcd *lcd, uint32_t position) {
 	updatePosition(lcd, position);
 	//osDelay(1);
 	writeControlRegister(lcd, 0x0D);
 }
 
+/*!
+ @brief Clears the cursor from the LCD.
+ @param *lcd: pointer to Lcd structure.
+ @retval None
+ */
 void clearCursor(struct Lcd *lcd) {
 	writeControlRegister(lcd, 0x0C);
 }

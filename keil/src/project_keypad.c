@@ -1,9 +1,18 @@
+/*!
+	@file project_keypad.c
+	Contains functions for the keypad initialization and functionality.
+*/
 #include "stm32f4xx.h"
 #include "cmsis_os.h"
 
 #include "project_keypad.h"
 #include "project_init.h"
 
+/*!
+ @brief Function that initializes the row of the keypad. 
+ @param *keypad: Pointer to a Keypad structure.
+ @retval None
+ */
 static void init_keypad_row_output(struct Keypad *keypad) {
 	GPIO_InitTypeDef GPIO_InitStructure;																														//Initialize nested vector interrupt controller structure
 	
@@ -26,6 +35,11 @@ static void init_keypad_row_output(struct Keypad *keypad) {
 	GPIO_SetBits(keypad->GPIO, keypad->colPins);
 }
 
+/*!
+ @brief Function that initializes the column of the keypad. 
+ @param *keypad: Pointer to a Keypad structure.
+ @retval None
+ */
 static void init_keypad_column_output(struct Keypad *keypad) {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	
@@ -48,6 +62,12 @@ static void init_keypad_column_output(struct Keypad *keypad) {
 	GPIO_SetBits(keypad->GPIO, keypad->rowPins);
 }
 
+
+/*!
+ @brief Function checks if a keypad button was pressed. 
+ @param *keypad: Pointer to a Keypad structure.
+ @retval None
+ */
 static void get_button_press(struct Keypad *keypad) {
 	uint8_t row_press;										//
 	uint8_t column_press;									//
@@ -68,6 +88,13 @@ static void get_button_press(struct Keypad *keypad) {
 	keypad->key_press = test;
 }
 
+/*!
+ @brief Function that initializes the keypad peripheral. 
+ @param *keypad: Pointer to a Keypad structure.
+ @param **tid_thread_keypad: Pointer to a thread control block.
+ @param *keypadInit: pointer to a KeypadInit structure.
+ @retval None
+ */
 void init_keypad(struct Keypad *keypad, osThreadId **tid_thread_keypad, struct KeypadInit *keypadInit) {
 	keypad->row_output					=0x0;
 	keypad->column_output				=0x0;
@@ -90,6 +117,12 @@ void init_keypad(struct Keypad *keypad, osThreadId **tid_thread_keypad, struct K
 	*tid_thread_keypad = &(keypad->threadID);
 }
 
+
+/*!
+ @brief Function that decipers the hex value of the button pressed and translates it to a value for a button: 0-9, * or #.
+ @param *keypad: Pointer to a Keypad structure. 
+ @retval None
+ */
 static void get_keypad_entry(struct Keypad *keypad) {
 	uint16_t key_input;
 	uint32_t button_value;
@@ -117,11 +150,11 @@ static void get_keypad_entry(struct Keypad *keypad) {
 	}else if(key_input==0xA9) {
 		button_value=0x9;
 	}else if(key_input==0x31) {
-		button_value=0xA;
+		button_value=0xA; //* (star) key got pressed
 	}else if(key_input==0x71) {
 		button_value=0x0;
 	}else if(key_input==0xB1) {
-		button_value=0xB;
+		button_value=0xB; //# (pound) key got pressed
 	} else {
 		button_value=0xFF;
 	}
@@ -137,6 +170,11 @@ static void get_keypad_entry(struct Keypad *keypad) {
 	}
 }
 
+/*!
+ @brief Thread that gets that waits for a button to be pressed and gets the value of that key press. 
+ @param *keypad: Pointer to a Keypad structure that gets passed to thread.
+ @retval None
+ */
 void keypadThread (void const *argument) {
 	struct Keypad *keypad;
 	keypad = (struct Keypad *)argument;

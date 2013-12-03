@@ -1,3 +1,7 @@
+/*!
+	@file main.c
+	Main file of transmitter program. 
+*/
 #include "arm_math.h"
 
 #include "stm32f4xx.h"
@@ -16,6 +20,7 @@
 /*!
  @brief Thread to perform menial tasks such as switching LEDs
  @param argument Unused
+ @retval None
  */
 void thread(void const *argument);
 
@@ -86,6 +91,11 @@ int main (void) {
 	osDelay(osWaitForever);
 }
 
+/*!
+ @brief Main thread of transmitter. 
+ @param Unused
+ @retval None
+ */
 void thread (void const *argument) {
 	uint8_t y, z, angle, magnet;
 	uint8_t tempY, tempZ, tempAngle;
@@ -254,6 +264,15 @@ void thread (void const *argument) {
 	}
 }
 
+/*!
+ @brief Updates data that the transmitter will send to receier. 
+ @param y: y-coordinate (out)
+ @param z: z-coordinate (up/down). Binary value.
+ @param angle: angle position of arm.
+ @param magnet: magnet state: on/off.
+ @param time: Time left until game is over.
+ @retval None
+ */
 void updateTransmitterData(int8_t y, int8_t z, int8_t angle, int8_t magnet, int8_t time) {
 	osMutexWait(transmitter.mutexID, osWaitForever);
 	if (y>=0) {
@@ -274,6 +293,11 @@ void updateTransmitterData(int8_t y, int8_t z, int8_t angle, int8_t magnet, int8
 	osMutexRelease(transmitter.mutexID);
 }
 
+/**
+  * @brief  IRQ handler for TIM2.
+	* @param  None
+  * @retval None
+  */
 void TIM2_IRQHandler(void) {
   if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)			//Checks interrupt status register to ensure an interrupt is pending
   {
@@ -282,6 +306,11 @@ void TIM2_IRQHandler(void) {
   }
 }
 
+/**
+  * @brief  IRQ handler for TIM3.
+	* @param  None
+  * @retval None
+  */
 void TIM3_IRQHandler(void) {
   if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET)			//Checks interrupt status register to ensure an interrupt is pending
   {
@@ -290,6 +319,11 @@ void TIM3_IRQHandler(void) {
   }
 }
 
+/**
+  * @brief  IRQ handler for TIM5.
+	* @param  None
+  * @retval None
+  */
 void TIM5_IRQHandler(void) {
   if (TIM_GetITStatus(TIM5, TIM_IT_Update) != RESET)			//Checks interrupt status register to ensure an interrupt is pending
   {
@@ -298,6 +332,11 @@ void TIM5_IRQHandler(void) {
   }
 }
 
+/**
+  * @brief  IRQ handler for TIM4.
+	* @param  None
+  * @retval None
+  */
 void TIM4_IRQHandler(void) {
   if (TIM_GetITStatus(TIM4, TIM_IT_Update) != RESET)			//Checks interrupt status register to ensure an interrupt is pending
   {

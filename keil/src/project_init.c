@@ -1,3 +1,7 @@
+/*!
+	@file project_init.c
+	File that initializes timers and GPIO pins at the beginning of the project.
+*/
 #include "stm32f4xx.h"
 
 #include "project_init.h"
@@ -53,6 +57,11 @@ void init_userButton() {
   NVIC_Init(&NVIC_InitStructure);																																		//Pass struct to NVIC, initialize
 }
 
+/**  
+  * @brief  Function that initializes TIM5 peripheral timer.
+  * @param  None  
+  * @retval None  
+  */
 void init_TIM5() {
   NVIC_InitTypeDef NVIC_InitStructure;																								//NVIC initialization struct
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;																			//Timer initialization struct
@@ -76,6 +85,11 @@ void init_TIM5() {
   NVIC_Init(&NVIC_InitStructure);																//Initialize NVIC for TIM3 with struct params
 }
 
+/**  
+  * @brief  Function that initializes TIM3 peripheral timer. 
+  * @param  None  
+  * @retval None  
+  */
 void init_TIM3() {
   NVIC_InitTypeDef NVIC_InitStructure;																								//NVIC initialization struct
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;																			//Timer initialization struct
@@ -99,6 +113,11 @@ void init_TIM3() {
   NVIC_Init(&NVIC_InitStructure);																//Initialize NVIC for TIM3 with struct params
 }
 
+/**  
+  * @brief  Function that initializes TIM4 peripheral timer. 
+  * @param  None  
+  * @retval None  
+  */
 void init_TIM4() {
   NVIC_InitTypeDef NVIC_InitStructure;																								//NVIC initialization struct
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;																			//Timer initialization struct
@@ -122,6 +141,11 @@ void init_TIM4() {
   NVIC_Init(&NVIC_InitStructure);																//Initialize NVIC for TIM3 with struct params
 }
 
+/**  
+  * @brief  Function that initializes TIM2 peripheral timer. 
+  * @param  None  
+  * @retval None  
+  */
 void init_TIM2(void) {
   NVIC_InitTypeDef NVIC_InitStructure;																															//Create NVIC struct for holding parameters
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;																										//Create TIM struct for holding timer parameters

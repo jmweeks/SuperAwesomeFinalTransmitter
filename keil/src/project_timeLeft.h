@@ -1,8 +1,15 @@
+/*!
+	@file project_timeLeft.h
+	Header file that supports @ref project_timeLeft.c
+*/
 #include "stm32f4xx.h"
 #include "cmsis_os.h"
 
-#define STARTING_TIME 60
+#define STARTING_TIME 99
 
+/**  
+  * @brief	TimeLeft structure used to keep track of how much time there is left until the game is over.
+  */
 struct TimeLeft {
 	uint32_t initialTime;
 	uint32_t timeLeft;

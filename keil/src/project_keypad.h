@@ -1,6 +1,13 @@
+/*!
+	@file project_keypad.h
+	Header file that supports @ref project_keypad.c file.
+*/
 #include "stm32f4xx.h"
 #include "cmsis_os.h"
 
+/*!
+	@brief Structure representing the keypad peripheral.
+*/
 struct Keypad {
 	uint16_t row_output;
 	uint16_t column_output;
@@ -17,6 +24,9 @@ struct Keypad {
 	uint16_t colPins;
 };
 
+/*!
+	@brief Structure representing the keypad initialization parameter.
+*/
 struct KeypadInit {
 	GPIO_TypeDef *GPIO;
 	uint32_t periph;

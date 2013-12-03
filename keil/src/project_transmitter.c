@@ -1,3 +1,7 @@
+/*!
+	@file project_transmitter.c
+	Source file for transmitter functionality. 
+*/
 #include "stm32f4xx.h"
 #include "cmsis_os.h"
 
@@ -5,6 +9,12 @@
 #include "project_init.h"
 #include "CC2500.h"
 
+/**  
+  * @brief  Function that initializes the transmitter.
+  * @param  *transmitter: Pointer to a Transmitter structure.
+	* @param  *tid_thread_transmitter: Pointer to the pushbutton thread control block.
+  * @retval None  
+  */
 void init_transmitter(struct Transmitter *transmitter, osThreadId **tid_thread_transmitter) {
 	transmitter->state = 0;
 	transmitter->buffer_space = 0;
@@ -27,6 +37,12 @@ void init_transmitter(struct Transmitter *transmitter, osThreadId **tid_thread_t
 	*tid_thread_transmitter = &(transmitter->threadID);
 }
 
+
+/**  
+  * @brief  Thread that periodically transmits data in the transmit buffer.  
+  * @param  *argument: Pointer to a Transmitter structure  
+  * @retval None  
+  */
 void transmitterThread (void const *argument) {
 	struct Transmitter *transmitter;
 	transmitter = (struct Transmitter *)argument;

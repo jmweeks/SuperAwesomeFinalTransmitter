@@ -57,7 +57,6 @@ static void read_accelerometer(struct Orientation *orientation) {
 	* @param  TIMx: TIM to write CCR values to
   * @retval None
   */
-
 void update_led_intensities(uint32_t led_intensities[], uint32_t length, TIM_TypeDef* TIMx) {
 	if (length == 4)
 	{
@@ -83,7 +82,6 @@ void update_led_intensities(uint32_t led_intensities[], uint32_t length, TIM_Typ
 	* @param  *orientation: Pointer to an Orientation struct, to update
   * @retval None
   */
-
 void update_orientation(struct Orientation *orientation) {
 	read_accelerometer(orientation);																																							//Read data into orientation struct
 	
@@ -97,9 +95,9 @@ void update_orientation(struct Orientation *orientation) {
 /**
   * @brief  Initalize orientation struct
 	* @param  *orientation: Pointer to Orientation structure to be initialized
+	* @param  **tid_thread_orientation: pointer to a thread control block
   * @retval None
   */
-
 void init_orientation(struct Orientation *orientation, osThreadId **tid_thread_orientation) {
 	orientation->rawx = 0;																																												//Set ALL THE THINGS to zero
 	orientation->rawy = 0;
@@ -150,6 +148,11 @@ void display_orientation(struct Orientation *orientation) {
 	update_led_intensities(new_led_intensities, sizeof(new_led_intensities)/sizeof(new_led_intensities[0]), TIM4);								//Update LED intensities
 }
 
+/**
+  * @brief  Thread function that updates accelerometer orientation.
+	* @param  *argument: pointer to argument passed to thread, which in this case is a struct representing accelerometer orientation.
+  * @retval None
+  */
 void orientationThread (void const *argument) {
 	struct Orientation *orientation;
 	orientation = (struct Orientation *)argument;

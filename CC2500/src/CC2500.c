@@ -456,6 +456,12 @@ uint32_t CC2500_TIMEOUT_UserCallback(void)
   }
 }
 
+/**
+  * @brief  Basic management of the transmitter states. When this function returns the transmitter is in TX state.
+  * @param  *state: pointer to state of transmitter state.
+	* @param 	*buffer_space: pointer representing space of transmitter FIFO.
+  * @retval None.
+  */
 void goToTX(uint8_t *state, uint8_t *buffer_space) {
 	CC2500_StrobeSend(SIDLE_T,state,buffer_space);
  	osDelay(STROBE_DELAY);
@@ -470,6 +476,12 @@ void goToTX(uint8_t *state, uint8_t *buffer_space) {
 	osDelay(STROBE_DELAY);
 }
 
+/**
+  * @brief  Basic management of the receiver states. When this function returns the receiver is in IDLE state.
+  * @param  *state: pointer to state of receiver state.
+	* @param 	*buffer_space: pointer representing space of receiver FIFO.
+  * @retval None.
+  */
 void goToRX(uint8_t *state, uint8_t *buffer_space) {
 	CC2500_StrobeSend(SIDLE_R,state,buffer_space);
 	osDelay(STROBE_DELAY);
@@ -484,6 +496,11 @@ void goToRX(uint8_t *state, uint8_t *buffer_space) {
 	osDelay(STROBE_DELAY);
 }
 
+/**
+  * @brief  Function that transmits data to receiver.
+  * @param  *transmitter: pointer to a Transmitter structure. 
+  * @retval None.
+  */
 void wireless_TX(struct Transmitter *transmitter) {
 	osMutexWait(transmitter->mutexID, osWaitForever);
 	uint8_t tripleData[3*sizeof(transmitter->data)/sizeof(transmitter->data[0])];
@@ -506,6 +523,12 @@ void wireless_TX(struct Transmitter *transmitter) {
 	osDelay(STROBE_DELAY);
 }
 
+
+/**
+  * @brief  Function that receives data and performs Triple Modular Redundancy. This is a blocking call.
+  * @param  *receiver: pointer to a Receiver structure. 
+  * @retval None.
+  */
 void wireless_RX(struct Receiver *receiver) {
 	uint8_t i=0;
 	uint8_t temp_data=0;

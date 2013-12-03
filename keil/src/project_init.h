@@ -1,3 +1,7 @@
+/*!
+	@file project_init.h
+	Header file that supports project_init.c source file.
+*/
 #include "stm32f4xx.h"
 #include "stm32f4_discovery_lis302dl.h"
 

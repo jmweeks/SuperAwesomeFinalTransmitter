@@ -1,9 +1,19 @@
+/*!
+	@file project_timeLeft.c
+	Source file for the countdown of the coin-collection game.
+*/
 #include "stm32f4xx.h"
 #include "cmsis_os.h"
 
 #include "project_init.h"
 #include "project_timeLeft.h"
 
+/*!
+ @brief Function that initializes the countdown timer for the coin-collection game.
+ @param *timeLeft: pointer to a TimeLeft structure
+ @param **tid_thread_timeLeft: Pointer to a thread control block.
+ @retval None
+ */
 void init_timeLeft(struct TimeLeft *timeLeft, osThreadId **tid_thread_timeLeft) {
 	timeLeft->initialTime = STARTING_TIME;
 	timeLeft->timeLeft = timeLeft->initialTime;
@@ -17,6 +27,11 @@ void init_timeLeft(struct TimeLeft *timeLeft, osThreadId **tid_thread_timeLeft) 
 	*tid_thread_timeLeft = &(timeLeft->threadID);
 }
 
+/*!
+ @brief Thread that counts down how much time there is left until the game ends.
+ @param *argument: pointer to a TimeLeft structure passed to thread.
+ @retval None
+ */
 void timeLeftThread (void const *argument) {
 	struct TimeLeft *timeLeft;
 	timeLeft = (struct TimeLeft *)argument;
@@ -32,6 +47,11 @@ void timeLeftThread (void const *argument) {
 	}
 }
 
+/*!
+ @brief Function that resets the timer for the game.
+ @param *timeLeft: pointer to a TimeLeft structure.
+ @retval None
+ */
 void resetTimeLeft(struct TimeLeft *timeLeft) {
 	timeLeft->timeLeft = timeLeft->initialTime;
 	timeLeft->started = 0;

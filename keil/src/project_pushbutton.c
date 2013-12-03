@@ -1,9 +1,20 @@
+/*!
+	@file project_pushbutton.c
+	Source file for the pushbutton functionality.
+*/
+
 #include "stm32f4xx.h"
 #include "cmsis_os.h"
 
 #include "project_pushbutton.h"
 #include "project_init.h"
 
+/**  
+  * @brief  Function that initializes the push button.
+  * @param  *pushbutton: Pointer to a Pushbutton structure 
+	* @param  *tid_thread_pushbutton: Pointer to the pushbutton thread control block.
+  * @retval None  
+  */
 void init_pushbutton(struct Pushbutton *pushbutton, osThreadId **tid_thread_pushbutton) {
 	pushbutton->buttonPressed = 0;
 	
@@ -16,6 +27,13 @@ void init_pushbutton(struct Pushbutton *pushbutton, osThreadId **tid_thread_push
 	*tid_thread_pushbutton = &(pushbutton->threadID);
 }
 
+
+/**  
+  * @brief  Thread that waits for the button push event. Once this event is received, 
+	*					the state of the push button structure is updated.
+  * @param  *argument: Pointer to a Pushbutton structure  
+  * @retval None  
+  */
 void pushbuttonThread (void const *argument) {
 	struct Pushbutton *pushbutton;
 	pushbutton = (struct Pushbutton *)argument;

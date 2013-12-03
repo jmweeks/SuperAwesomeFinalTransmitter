@@ -1,3 +1,7 @@
+/*!
+	@file project_transmitter.h
+	Header file that supports @ref project_transmitter.c
+*/
 #include "stm32f4xx.h"
 #include "cmsis_os.h"
 
@@ -8,6 +12,9 @@
 #ifndef TRANSMITTER_STRUCT
 #define TRANSMITTER_STRUCT
 
+/*!
+ @brief Structure representing the transmitter state and buffer space, among other things.
+ */
 struct Transmitter {
 	uint8_t data[TRANSMIT_DATA_SIZE];
 	uint8_t state;

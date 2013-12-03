@@ -1,3 +1,7 @@
+/*!
+	@file project_lcd.h
+	Header file that supports @ref project_lcd.c file.
+*/
 #include "stm32f4xx.h"
 
 #define LCD_WAIT_TIME 0
@@ -5,6 +9,9 @@
 #define LCD_HEIGHT 2
 #define LCD_SECOND_ROW_STARTING_ADDRESS 0x40
 
+/*!
+ @brief Structure representing the LCD.
+ */
 struct Lcd {
 	uint8_t state;
 	GPIO_TypeDef *GPIO;
@@ -22,6 +29,9 @@ struct Lcd {
 	char line2[LCD_WIDTH];
 };
 
+/*!
+ @brief Structure grouping the LCD initialization parameters.
+ */
 struct LcdInit {
 	GPIO_TypeDef *GPIO;
 	uint32_t periph;
