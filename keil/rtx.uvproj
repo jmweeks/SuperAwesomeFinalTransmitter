@@ -472,6 +472,11 @@
               <FileType>1</FileType>
               <FilePath>.\src\project_pushbutton.c</FilePath>
             </File>
+            <File>
+              <FileName>project_receiver.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\project_receiver.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

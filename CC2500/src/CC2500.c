@@ -4,6 +4,7 @@
 
 #include "project_receiver.h"
 #include "project_transmitter.h"
+#include "CC2500.h"
 
 /** @defgroup STM32F4_DISCOVERY_CC2500_Private_Defines
   * @{
@@ -503,17 +504,17 @@ void goToRX(uint8_t *state, uint8_t *buffer_space) {
   */
 void wireless_TX(struct Transmitter *transmitter) {
 	osMutexWait(transmitter->mutexID, osWaitForever);
-	uint8_t tripleData[3*sizeof(transmitter->data)/sizeof(transmitter->data[0])];
+	uint8_t tripleData[MODULUS_REDUNDANCY*sizeof(transmitter->data)/sizeof(transmitter->data[0])];
 	uint32_t i;
 	
 	for (i=0; i<sizeof(transmitter->data)/sizeof(transmitter->data[0]); i++) {
-		tripleData[3*i] = transmitter->data[i] | ((3*i)<<4);
-		tripleData[3*i+1] = transmitter->data[i] | ((3*i+1)<<4);
-		tripleData[3*i+2] = transmitter->data[i] | ((3*i+2)<<4);
+		tripleData[MODULUS_REDUNDANCY*i] = transmitter->data[i] | ((MODULUS_REDUNDANCY*i)<<4);
+		tripleData[MODULUS_REDUNDANCY*i+1] = transmitter->data[i] | ((MODULUS_REDUNDANCY*i+1)<<4);
+		tripleData[MODULUS_REDUNDANCY*i+2] = transmitter->data[i] | ((MODULUS_REDUNDANCY*i+2)<<4);
 	}
 
 	tripleData[0] = tripleData[0] | 0xF0;
-	CC2500_Write(tripleData, FIFO_REG, 3*sizeof(transmitter->data)/sizeof(transmitter->data[0]));
+	CC2500_Write(tripleData, FIFO_REG, MODULUS_REDUNDANCY*sizeof(transmitter->data)/sizeof(transmitter->data[0]));
 	osMutexRelease(transmitter->mutexID);
 	osDelay(STROBE_DELAY);
 	
@@ -522,7 +523,6 @@ void wireless_TX(struct Transmitter *transmitter) {
 	osMutexRelease(transmitter->mutexID);	
 	osDelay(STROBE_DELAY);
 }
-
 
 /**
   * @brief  Function that receives data and performs Triple Modular Redundancy. This is a blocking call.
@@ -534,13 +534,13 @@ void wireless_RX(struct Receiver *receiver) {
 	uint8_t temp_data=0;
 	
 	osMutexWait(receiver->mutexID, osWaitForever);	
-	uint8_t raw_data[sizeof(receiver->data)/sizeof(receiver->data[0]) * 3];
+	uint8_t raw_data[sizeof(receiver->data)/sizeof(receiver->data[0]) * MODULUS_REDUNDANCY];
 	CC2500_StrobeSend(SRX_R,&(receiver->state),&(receiver->buffer_space));
 	osMutexRelease(receiver->mutexID);
 	
 	osDelay(STROBE_DELAY);
 	
-	while (i<(sizeof(receiver->data)/sizeof(receiver->data[0]) * 3)) {
+	while (i<(sizeof(receiver->data)/sizeof(receiver->data[0]) * MODULUS_REDUNDANCY)) {
 		osMutexWait(receiver->mutexID, osWaitForever);
 		CC2500_StrobeSend(SNOP_R,&(receiver->state),&(receiver->buffer_space));	
 		
@@ -566,7 +566,7 @@ void wireless_RX(struct Receiver *receiver) {
 	
 	osMutexWait(receiver->mutexID, osWaitForever);
 	for(uint32_t j=0;j<sizeof(receiver->data)/sizeof(receiver->data[0]);j++){
-		receiver->data[j] = ((raw_data[3*j]&raw_data[3*j+1]) | (raw_data[3*j]&raw_data[3*j+2]) | (raw_data[3*j+2]&raw_data[3*j+1]));
+		receiver->data[j] = ((raw_data[MODULUS_REDUNDANCY*j]&raw_data[MODULUS_REDUNDANCY*j+1]) | (raw_data[MODULUS_REDUNDANCY*j]&raw_data[MODULUS_REDUNDANCY*j+2]) | (raw_data[MODULUS_REDUNDANCY*j+2]&raw_data[MODULUS_REDUNDANCY*j+1]));
 	}
 	
 	CC2500_StrobeSend(SIDLE_R,&(receiver->state),&(receiver->buffer_space));

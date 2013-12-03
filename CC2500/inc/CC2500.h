@@ -13,9 +13,13 @@
 #include "stm32f4xx.h"
 #include "stm32f4xx_conf.h"
 #include "cmsis_os.h"
+ 
+#include "stm32f4xx.h"
+#include "stm32f4xx_conf.h"
 
 #include "project_receiver.h"
 #include "project_transmitter.h"
+
 
 /* CC2500 structs */
 
@@ -429,6 +433,8 @@ Bit 		Field Name 			Description
 #define FIFO_REG				0x3F
 
 #define STROBE_DELAY		10
+
+#define MODULUS_REDUNDANCY 3
 
 
 

@@ -22,7 +22,7 @@
  @param argument Unused
  @retval None
  */
-void thread(void const *argument);
+void controllerThread(void const *argument);
 
 void updateTransmitterData(int8_t y, int8_t z, int8_t angle, int8_t magnet, int8_t time);
 
@@ -34,14 +34,14 @@ static struct TimeLeft timeLeft;
 static struct Pushbutton pushbutton;
 
 //! Thread structure for above thread
-osThreadDef(thread, osPriorityNormal, 1, 0);
+osThreadDef(controllerThread, osPriorityNormal, 1, 0);
 
 static osThreadId *tid_thread_keypad;
 static osThreadId *tid_thread_orientation;
 static osThreadId *tid_thread_transmitter;
 static osThreadId *tid_thread_timeLeft;
 static osThreadId *tid_thread_pushbutton;
-static osThreadId tid_thread;
+static osThreadId tid_controllerThread;
 
 static uint32_t mode = 0;
 static uint32_t pushbutton_pressed = 0;
@@ -86,7 +86,7 @@ int main (void) {
 	init_timeLeft(&timeLeft, &tid_thread_timeLeft);
 	init_pushbutton(&pushbutton, &tid_thread_pushbutton);
 	
-	tid_thread = osThreadCreate(osThread(thread), NULL);
+	tid_controllerThread = osThreadCreate(osThread(controllerThread), NULL);
 
 	osDelay(osWaitForever);
 }
@@ -96,7 +96,7 @@ int main (void) {
  @param Unused
  @retval None
  */
-void thread (void const *argument) {
+void controllerThread (void const *argument) {
 	uint8_t y, z, angle, magnet;
 	uint8_t tempY, tempZ, tempAngle;
 	uint16_t currentKey;
@@ -149,7 +149,9 @@ void thread (void const *argument) {
 			if (magnet) {
 				magnet = 0;
 			} else {
-				magnet = 1;
+				if (mode || !z) {
+					magnet = 1;
+				}
 			}
 		}
 		
@@ -216,6 +218,7 @@ void thread (void const *argument) {
 				angle = STARTING_ANGLE;
 				magnet = STARTING_MAGNET;
 				updateTransmitterData(y, z, angle, magnet, 0);
+				resetTimeLeft(&timeLeft);
 			}
 				
 			if (!isStarted) {
@@ -246,15 +249,17 @@ void thread (void const *argument) {
 				
 				if (currentKey == 0x0B) {
 					if (z) {
-						z = 0;
+						if (!magnet) {
+							z = 0;
+						}
 					} else {
 						z = 1;
 					}
 				}
 				if (z) {
-					updateTransmitterData(y, z, angle, magnet, time*16/initialTime);
+					updateTransmitterData(y, z, angle, magnet, time*15/initialTime+1);
 				} else {
-					updateTransmitterData(NO_UPDATE, z, NO_UPDATE, magnet, time*16/initialTime);
+					updateTransmitterData(NO_UPDATE, z, NO_UPDATE, magnet, time*15/initialTime+1);
 				}
 			}
 		}

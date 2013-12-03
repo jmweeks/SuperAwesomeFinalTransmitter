@@ -53,6 +53,8 @@ void timeLeftThread (void const *argument) {
  @retval None
  */
 void resetTimeLeft(struct TimeLeft *timeLeft) {
+	osMutexWait(timeLeft->mutexID, osWaitForever);
 	timeLeft->timeLeft = timeLeft->initialTime;
 	timeLeft->started = 0;
+	osMutexRelease(timeLeft->mutexID);
 }
