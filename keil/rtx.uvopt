@@ -260,10 +260,10 @@
       <FileType>2</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>27</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>174</TopLine>
-      <CurrentLine>182</CurrentLine>
+      <CurrentLine>185</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>../startup_stm32f4xx.s</PathWithFileName>
       <FilenameWithoutPath>startup_stm32f4xx.s</FilenameWithoutPath>
@@ -334,7 +334,7 @@
       <Focus>0</Focus>
       <ColumnNumber>43</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>61</TopLine>
+      <TopLine>62</TopLine>
       <CurrentLine>70</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>../main.c</PathWithFileName>
@@ -350,7 +350,7 @@
       <Focus>0</Focus>
       <ColumnNumber>20</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
+      <TopLine>2</TopLine>
       <CurrentLine>7</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\src\project_init.c</PathWithFileName>
@@ -366,7 +366,7 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>108</TopLine>
+      <TopLine>109</TopLine>
       <CurrentLine>116</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\src\project_accelerometer.c</PathWithFileName>
@@ -396,9 +396,9 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>42</ColumnNumber>
+      <ColumnNumber>43</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>157</TopLine>
+      <TopLine>158</TopLine>
       <CurrentLine>164</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\src\project_lcd.c</PathWithFileName>
@@ -412,10 +412,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>5</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>159</TopLine>
-      <CurrentLine>175</CurrentLine>
+      <TopLine>163</TopLine>
+      <CurrentLine>176</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\src\project_keypad.c</PathWithFileName>
       <FilenameWithoutPath>project_keypad.c</FilenameWithoutPath>
@@ -462,7 +462,7 @@
       <Focus>0</Focus>
       <ColumnNumber>30</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>7</TopLine>
+      <TopLine>8</TopLine>
       <CurrentLine>9</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\src\project_pushbutton.c</PathWithFileName>
@@ -742,7 +742,7 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>383</TopLine>
+      <TopLine>384</TopLine>
       <CurrentLine>386</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_gpio.c</PathWithFileName>
@@ -854,7 +854,7 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1088</TopLine>
+      <TopLine>1089</TopLine>
       <CurrentLine>1091</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_rcc.c</PathWithFileName>

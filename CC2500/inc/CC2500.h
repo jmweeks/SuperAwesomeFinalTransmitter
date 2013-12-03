@@ -315,13 +315,13 @@ Bit 		Field Name 			Description
 #define CC2500_CFG_FSCTRL0    0x00 //Frequency Synthesizer Control
 
 //Frequency Control Word, High Byte
-#define CC2500_CFG_FREQ2      0x5D // Carrier Frequency is 2.433GHz
+#define CC2500_CFG_FREQ2      0x5F//0x5D // Carrier Frequency is 2.433GHz
 
 //Frequency Control Word, Middle Byte
-#define CC2500_CFG_FREQ1      0x93
+#define CC2500_CFG_FREQ1      0x76//0x93
 
 //Frequency Control Word, Low Byte
-#define CC2500_CFG_FREQ0      0xB1
+#define CC2500_CFG_FREQ0      0x27//0xB1
 
 //Modem Configuration
 #define CC2500_CFG_MDMCFG4    0x0E //0x2D // BW of channel = 541.666kHz
