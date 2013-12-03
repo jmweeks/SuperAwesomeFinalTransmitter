@@ -5,7 +5,7 @@
 #include "stm32f4xx.h"
 #include "stm32f4_discovery_lis302dl.h"
 
-#define TIM5_FREQUENCY 15
+#define TIM5_FREQUENCY 20
 #define TIM3_FREQUENCY 3
 #define TIM4_FREQUENCY 1
 #define TIM2_FREQUENCY 25
