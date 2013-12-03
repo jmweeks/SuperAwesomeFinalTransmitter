@@ -102,6 +102,8 @@ void init_keypad(struct Keypad *keypad, osThreadId **tid_thread_keypad, struct K
 	keypad->key_char						=0x0;
 	keypad->new_data_available	=0x0;
 	keypad->old_key_char				=0x0;
+	keypad->fNumber							=0x0;
+	keypad->fRequired = keypadInit->fRequired;
 	
 	keypad->GPIO = keypadInit->GPIO;
 	keypad->periph = keypadInit->periph;
@@ -164,9 +166,13 @@ static void get_keypad_entry(struct Keypad *keypad) {
 			keypad->key_char = button_value;
 			keypad->new_data_available = 1;
 			keypad->old_key_char = button_value;
+			keypad->fNumber = 0;
 		}
 	} else {
-		keypad->old_key_char = button_value;
+		keypad->fNumber++;
+		if (keypad->fNumber == keypad->fRequired) {
+			keypad->old_key_char = button_value;
+		}
 	}
 }
 

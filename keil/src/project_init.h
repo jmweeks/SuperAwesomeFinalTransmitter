@@ -29,6 +29,8 @@
 #define STARTING_MAGNET 0
 #define NO_UPDATE -1
 
+#define KEYPAD_F_REQUIRED 5
+
 void init_userButton(void);
 void init_TIM5(void);
 void init_TIM3(void);

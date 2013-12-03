@@ -67,6 +67,7 @@ int main (void) {
 	lcdInit.pinD6 = GPIO_Pin_13;
 	lcdInit.pinD7 = GPIO_Pin_14;
 	
+	keypadInit.fRequired = KEYPAD_F_REQUIRED;
 	keypadInit.GPIO = GPIOD;
 	keypadInit.periph = RCC_AHB1Periph_GPIOD;
 	keypadInit.rowPins = GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;

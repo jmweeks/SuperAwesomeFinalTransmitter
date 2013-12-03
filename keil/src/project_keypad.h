@@ -15,9 +15,10 @@ struct Keypad {
 	uint32_t key_char;
 	uint32_t new_data_available;
 	uint16_t old_key_char;
+	uint32_t fNumber;
+	uint32_t fRequired;
 	osThreadId threadID;
 	osMutexId mutexID;
-	
 	GPIO_TypeDef *GPIO;
 	uint32_t periph;
 	uint16_t rowPins;
@@ -28,6 +29,7 @@ struct Keypad {
 	@brief Structure representing the keypad initialization parameter.
 */
 struct KeypadInit {
+	uint32_t fRequired;
 	GPIO_TypeDef *GPIO;
 	uint32_t periph;
 	uint16_t rowPins;
